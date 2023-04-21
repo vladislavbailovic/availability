@@ -1,3 +1,7 @@
+cover:
+	go test ./... -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
 job-image:
 	docker build . -t availability:job --target job
 docker-controller-image:
