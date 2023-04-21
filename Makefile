@@ -1,0 +1,10 @@
+job-image:
+	docker build . -t availability:job --target job
+docker-controller-image:
+		docker build . -t availability:docker-controller --target docker-controller
+
+run-docker-controller: docker-controller-image job-image
+	docker run --rm \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		--name docker-controller \
+		availability:docker-controller
