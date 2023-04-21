@@ -46,9 +46,24 @@ func (x *fakeStopperError) ContainerStop(_ context.Context, _ string, _ containe
 	return errors.New("fake error")
 }
 
+func (x *fakeStopperError) ContainerWait(_ context.Context, _ string, _ container.WaitCondition) (<-chan container.WaitResponse, <-chan error) {
+	ch := make(chan container.WaitResponse)
+	go func() {
+		ch <- container.WaitResponse{}
+	}()
+	return ch, make(chan error)
+}
+
 type fakeStopperSuccess struct{ opts container.StopOptions }
 
 func (x *fakeStopperSuccess) ContainerStop(_ context.Context, _ string, opts container.StopOptions) error {
 	x.opts = opts
 	return nil
+}
+func (x *fakeStopperSuccess) ContainerWait(_ context.Context, _ string, _ container.WaitCondition) (<-chan container.WaitResponse, <-chan error) {
+	ch := make(chan container.WaitResponse)
+	go func() {
+		ch <- container.WaitResponse{}
+	}()
+	return ch, make(chan error)
 }

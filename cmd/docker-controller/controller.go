@@ -80,10 +80,17 @@ func Stop(ctx context.Context, siteID int, siteURL string) error {
 
 type stopper interface {
 	ContainerStop(context.Context, string, container.StopOptions) error
+	ContainerWait(context.Context, string, container.WaitCondition) (<-chan container.WaitResponse, <-chan error)
 }
 
 func stop(cli stopper, ctx context.Context, siteID int, siteURL string) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	jobName := getJobName(siteID, siteURL)
+
+	resCh, errCh := cli.ContainerWait(ctx, jobName, container.WaitConditionRemoved)
+
 	tmout := 0
 	opts := container.StopOptions{Timeout: &tmout}
 	if err := cli.ContainerStop(ctx, jobName, opts); err != nil {
@@ -91,8 +98,12 @@ func stop(cli stopper, ctx context.Context, siteID int, siteURL string) error {
 		return err
 	}
 
-	log.Println("Container apparently stopped")
-	time.Sleep(time.Second)
+	select {
+	case <-resCh:
+		log.Println("Container apparently stopped")
+	case err := <-errCh:
+		log.Printf("Error stopping container: %v", err)
+	}
 	return nil
 }
 
