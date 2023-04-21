@@ -1,6 +1,12 @@
 package main
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/docker/docker/api/types/container"
+)
 
 func Test_getJobName(t *testing.T) {
 	suite := map[string]string{
@@ -19,4 +25,30 @@ func Test_getJobName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_StopContainer(t *testing.T) {
+	if err := stop(new(fakeStopperError), context.TODO(), 1, "test"); err == nil {
+		t.Error("expected error")
+	}
+
+	s := new(fakeStopperSuccess)
+	if err := stop(s, context.TODO(), 1, "test"); err != nil {
+		t.Errorf("expected success, got %v", err)
+	} else if *s.opts.Timeout != 0 {
+		t.Errorf("invalid options: %v", s.opts)
+	}
+}
+
+type fakeStopperError struct{}
+
+func (x *fakeStopperError) ContainerStop(_ context.Context, _ string, _ container.StopOptions) error {
+	return errors.New("fake error")
+}
+
+type fakeStopperSuccess struct{ opts container.StopOptions }
+
+func (x *fakeStopperSuccess) ContainerStop(_ context.Context, _ string, opts container.StopOptions) error {
+	x.opts = opts
+	return nil
 }

@@ -75,6 +75,14 @@ func Stop(ctx context.Context, siteID int, siteURL string) error {
 		return err
 	}
 
+	return stop(cli, ctx, siteID, siteURL)
+}
+
+type stopper interface {
+	ContainerStop(context.Context, string, container.StopOptions) error
+}
+
+func stop(cli stopper, ctx context.Context, siteID int, siteURL string) error {
 	jobName := getJobName(siteID, siteURL)
 	tmout := 0
 	opts := container.StopOptions{Timeout: &tmout}
