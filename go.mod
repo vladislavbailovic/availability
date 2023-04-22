@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/docker/docker v23.0.4+incompatible
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/opencontainers/image-spec v1.0.2
 	google.golang.org/protobuf v1.30.0
 )

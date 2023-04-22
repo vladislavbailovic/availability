@@ -3,6 +3,7 @@ package collections
 import (
 	"availability/pkg/data"
 	"availability/pkg/data/model"
+	"log"
 )
 
 // TODO: implement fetching pings
@@ -24,6 +25,10 @@ func GetActiveTasks(query data.Collector, limit int) ([]*model.Task, error) {
 				&s.URL,
 				&p.Err)
 			if err != nil {
+				log.Printf("WARNING: scan error: %v", err)
+				continue
+			}
+			if s.SiteID == 0 {
 				continue
 			}
 			t := new(model.Task)
