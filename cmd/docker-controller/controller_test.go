@@ -1,9 +1,10 @@
 package main
 
 import (
-	"availability/pkg/data/model"
 	"strings"
 	"testing"
+
+	"availability/pkg/data/model"
 )
 
 func Test_getJobName(t *testing.T) {

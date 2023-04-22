@@ -1,10 +1,11 @@
 package main
 
 import (
-	"availability/pkg/data/model"
 	"fmt"
 	"net/url"
 	"strings"
+
+	"availability/pkg/data/model"
 )
 
 type envName uint
