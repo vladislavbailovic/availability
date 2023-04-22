@@ -5,9 +5,11 @@ cover:
 	go tool cover -html=coverage.out -o coverage.html
 
 job-image:
-	docker build . -t availability:job --target job
+	docker build . -f docker/availiability-service \
+		-t availability:job --target job
 docker-controller-image:
-		docker build . -t availability:docker-controller --target docker-controller
+		docker build . -f docker/availiability-service \
+			-t availability:docker-controller --target docker-controller
 
 run-docker-controller: docker-controller-image job-image
 	docker run --rm \
