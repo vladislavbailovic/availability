@@ -5,10 +5,13 @@ import (
 	"log"
 	"sync"
 
+	"availability/pkg/data/collections"
 	"availability/pkg/data/model"
 
 	"github.com/docker/docker/client"
 )
+
+const maxActiveTasks int = 5
 
 func main() {
 	ctx := context.Background()
@@ -17,7 +20,11 @@ func main() {
 		panic(err)
 	}
 
-	tasks := getSitesToPing()
+	query := new(collections.FakeTaskCollection)
+	tasks, err := collections.GetActiveTasks(query, maxActiveTasks)
+	if err != nil {
+		panic(err)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(len(tasks))
@@ -33,24 +40,4 @@ func main() {
 
 	wg.Wait()
 	log.Println("-- all good --")
-}
-
-func getSitesToPing() []*model.Task {
-	// TODO: implement fetching pings
-	// This is going to be something like:
-	// SELECT * FROM sites WHERE toPing=1 AND somehow-last-pinged WITHIN <PING_INTERVAL+1>
-	return []*model.Task{
-		&model.Task{
-			Source: &model.Source{
-				SiteID: 1312,
-				URL:    "https://snap42.wpmudev.host",
-			},
-		},
-		&model.Task{
-			Source: &model.Source{
-				SiteID: 161,
-				URL:    "http://puppychowfoo.rocks",
-			},
-		},
-	}
 }
