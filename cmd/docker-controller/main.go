@@ -12,7 +12,10 @@ import (
 	"github.com/docker/docker/client"
 )
 
-const maxActiveTasks int = 5
+const (
+	maxActiveTasks  int = 5
+	pingTimeoutSecs int = 120
+)
 
 func main() {
 	ctx := context.Background()
@@ -27,7 +30,7 @@ func main() {
 	}
 	defer query.Disconnect()
 
-	tasks, err := collections.GetActiveTasks(query, maxActiveTasks)
+	tasks, err := collections.GetActiveTasks(query, maxActiveTasks, pingTimeoutSecs)
 	if err != nil {
 		panic(err)
 	}

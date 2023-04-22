@@ -15,14 +15,7 @@ type TaskCollection struct {
 }
 
 func (x TaskCollection) Query(args ...any) (*data.Scanners, error) {
-	var limit int
-	if len(args) > 0 {
-		if l, ok := args[0].(int); ok {
-			limit = l
-		}
-	} else {
-		limit = 10
-	}
+	limit := data.IntArgAt(args, 0)
 	if limit == 0 {
 		return nil, errors.New("expected limit")
 	}

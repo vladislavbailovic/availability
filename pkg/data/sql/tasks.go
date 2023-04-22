@@ -33,14 +33,13 @@ func (x *TaskCollection) Disconnect() {
 }
 
 func (x *TaskCollection) Query(args ...any) (*data.Scanners, error) {
-	var limit int
-	if len(args) > 0 {
-		if l, ok := args[0].(int); ok {
-			limit = l
-		}
-	}
+	limit := data.IntArgAt(args, 0)
 	if limit == 0 {
 		return nil, errors.New("expected limit")
+	}
+	pingTimeout := data.IntArgAt(args, 1)
+	if pingTimeout == 0 {
+		return nil, errors.New("expected ping timeout, in seconds")
 	}
 
 	if err := x.Connect(); err != nil {
@@ -52,14 +51,14 @@ func (x *TaskCollection) Query(args ...any) (*data.Scanners, error) {
 			"SELECT site_id, err, recorded FROM probes ORDER BY recorded DESC LIMIT 1" +
 			") AS probe ON sources.site_id=probe.site_id " +
 			"WHERE sources.active=1 AND " +
-			"probe.recorded BETWEEN TIMESTAMPADD(MINUTE, -2, NOW()) AND NOW() " +
+			"TIMESTAMPDIFF(SECOND, probe.recorded, NOW()) > ? " +
 			"LIMIT ?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	results, err := stmt.Query(limit)
+	results, err := stmt.Query(pingTimeout, limit)
 	if err != nil {
 		return nil, err
 	}

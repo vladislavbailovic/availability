@@ -13,7 +13,7 @@ func Test_GetActiveTasks(t *testing.T) {
 			fakes.Source{ID: 161, URL: "http://puppychowfoo.rocks"},
 		},
 	}
-	ts, err := GetActiveTasks(query, 10)
+	ts, err := GetActiveTasks(query, 10, 10)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

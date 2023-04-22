@@ -6,10 +6,10 @@ import (
 	"log"
 )
 
-func GetActiveTasks(query data.Collector, limit int) ([]*model.Task, error) {
+func GetActiveTasks(query data.Collector, limit int, within int) ([]*model.Task, error) {
 	ts := make([]*model.Task, 0, limit)
 
-	if res, err := query.Query(limit); err != nil {
+	if res, err := query.Query(within, limit); err != nil {
 		return ts, err
 	} else if res == nil {
 		return ts, nil
