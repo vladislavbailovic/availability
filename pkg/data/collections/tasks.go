@@ -1,9 +1,10 @@
 package collections
 
 import (
+	"log"
+
 	"availability/pkg/data"
 	"availability/pkg/data/model"
-	"log"
 )
 
 func GetActiveTasks(query data.Collector, limit int, within int) ([]*model.Task, error) {
