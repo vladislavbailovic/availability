@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"availability/pkg/data/collections"
+	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
 
 	"github.com/docker/docker/client"
@@ -20,7 +21,12 @@ func main() {
 		panic(err)
 	}
 
-	query := new(collections.FakeTaskCollection)
+	query := &fakes.TaskCollection{
+		Sources: []fakes.Source{
+			fakes.Source{ID: 1312, URL: "https://snap42.wpmudev.host"},
+			fakes.Source{ID: 161, URL: "http://puppychowfoo.rocks"},
+		},
+	}
 	tasks, err := collections.GetActiveTasks(query, maxActiveTasks)
 	if err != nil {
 		panic(err)

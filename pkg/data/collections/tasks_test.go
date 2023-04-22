@@ -1,10 +1,19 @@
 package collections
 
-import "testing"
+import (
+	"testing"
+
+	"availability/pkg/data/fakes"
+)
 
 func Test_GetActiveTasks(t *testing.T) {
-	f := new(FakeTaskCollection)
-	ts, err := GetActiveTasks(f, 10)
+	query := &fakes.TaskCollection{
+		Sources: []fakes.Source{
+			fakes.Source{ID: 1312, URL: "https://snap42.wpmudev.host"},
+			fakes.Source{ID: 161, URL: "http://puppychowfoo.rocks"},
+		},
+	}
+	ts, err := GetActiveTasks(query, 10)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -13,6 +22,9 @@ func Test_GetActiveTasks(t *testing.T) {
 	}
 	if len(ts) == 0 {
 		t.Error("expected at least some tasks")
+	}
+	if len(ts) != 2 {
+		t.Error("expected exact number of tasks")
 	}
 
 	for idx, tk := range ts {
