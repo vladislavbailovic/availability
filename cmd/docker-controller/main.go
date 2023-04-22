@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	maxActiveTasks  int = 5
-	pingTimeoutSecs int = 120
+	maxActiveTasks          int = 5
+	pingTimeoutSecs         int = 120
+	maxResponseDurationSecs int = 10
 )
 
 func main() {
@@ -30,7 +31,8 @@ func main() {
 	}
 	defer query.Disconnect()
 
-	tasks, err := collections.GetActiveTasks(query, maxActiveTasks, pingTimeoutSecs)
+	tmout := pingTimeoutSecs + maxResponseDurationSecs
+	tasks, err := collections.GetActiveTasks(query, maxActiveTasks, tmout)
 	if err != nil {
 		panic(err)
 	}
