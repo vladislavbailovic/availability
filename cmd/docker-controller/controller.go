@@ -33,7 +33,7 @@ func (x envName) String() string {
 
 func getJobName(siteID int32, siteURL string) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "ping-%d", siteID)
+	fmt.Fprintf(&b, "avbl-ping-%d", siteID)
 
 	lnk, err := url.Parse(siteURL)
 	if err == nil {

@@ -9,12 +9,12 @@ import (
 
 func Test_getJobName(t *testing.T) {
 	suite := map[string]string{
-		"http://puppychowfoo.rocks":      "ping-161-puppychowfoo.rocks",
-		"https://puppychowfoo.rocks":     "ping-161-puppychowfoo.rocks",
-		"http://puppy.chowfoo.rocks":     "ping-161-puppy.chowfoo.rocks",
-		"http://puppy.chow.foo.rocks":    "ping-161-puppy.chow.foo.rocks",
-		"http://puppychowfoo.rocks:80":   "ping-161-puppychowfoo.rocks80",
-		"http://puppychowfoo.rocks/test": "ping-161-puppychowfoo.rocks",
+		"http://puppychowfoo.rocks":      "avbl-ping-161-puppychowfoo.rocks",
+		"https://puppychowfoo.rocks":     "avbl-ping-161-puppychowfoo.rocks",
+		"http://puppy.chowfoo.rocks":     "avbl-ping-161-puppy.chowfoo.rocks",
+		"http://puppy.chow.foo.rocks":    "avbl-ping-161-puppy.chow.foo.rocks",
+		"http://puppychowfoo.rocks:80":   "avbl-ping-161-puppychowfoo.rocks80",
+		"http://puppychowfoo.rocks/test": "avbl-ping-161-puppychowfoo.rocks",
 	}
 	for test, want := range suite {
 		t.Run(test, func(t *testing.T) {
