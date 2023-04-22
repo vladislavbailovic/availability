@@ -11,7 +11,7 @@ docker-controller-image:
 		docker build . -f docker/availiability-service \
 			-t availability:docker-controller --target docker-controller
 
-mysql:
+data:
 	-docker container stop avbl-data
 	docker build . -t availability:mysql -f docker/mysql
 	docker run --rm -d -p 63306:3306 --name avbl-data \
@@ -21,5 +21,6 @@ mysql:
 run-docker-controller: docker-controller-image job-image
 	docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
+		--link avbl-data \
 		--name avbl-controller \
 		availability:docker-controller
