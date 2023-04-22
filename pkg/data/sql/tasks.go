@@ -49,8 +49,11 @@ func (x *TaskCollection) Query(args ...any) (*data.Scanners, error) {
 
 	stmt, err := x.conn.Prepare(
 		"SELECT sources.site_id, url, IFNULL(err, 0) as err FROM sources LEFT JOIN (" +
-			"SELECT site_id, err FROM probes ORDER BY recorded DESC LIMIT 1" +
-			") AS probe ON sources.site_id=probe.site_id WHERE sources.active=1 LIMIT ?")
+			"SELECT site_id, err, recorded FROM probes ORDER BY recorded DESC LIMIT 1" +
+			") AS probe ON sources.site_id=probe.site_id " +
+			"WHERE sources.active=1 AND " +
+			"probe.recorded BETWEEN TIMESTAMPADD(MINUTE, -2, NOW()) AND NOW() " +
+			"LIMIT ?")
 	if err != nil {
 		return nil, err
 	}

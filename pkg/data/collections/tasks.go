@@ -6,9 +6,6 @@ import (
 	"log"
 )
 
-// TODO: implement fetching pings
-// This is going to be something like:
-// SELECT * FROM sites WHERE toPing=1 AND somehow-last-pinged WITHIN <PING_INTERVAL+1>
 func GetActiveTasks(query data.Collector, limit int) ([]*model.Task, error) {
 	ts := make([]*model.Task, 0, limit)
 
