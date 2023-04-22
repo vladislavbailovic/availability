@@ -1,6 +1,7 @@
 package main
 
 import (
+	"availability/pkg/data/model"
 	"strings"
 	"testing"
 )
@@ -25,7 +26,13 @@ func Test_getJobName(t *testing.T) {
 }
 
 func Test_getJobEnv(t *testing.T) {
-	e := getJobEnv(161, "http://puppychowfoo.rocks")
+	task := &model.Task{
+		Source: &model.Source{
+			SiteID: 161,
+			URL:    "http://puppychowfoo.rocks",
+		},
+	}
+	e := getJobEnv(task)
 
 	if len(e) != int(_envNamesCount) {
 		t.Errorf("unexpected env size: %d (wanted %d)", len(e), _envNamesCount)

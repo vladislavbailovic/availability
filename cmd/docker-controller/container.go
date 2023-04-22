@@ -32,7 +32,7 @@ type creatorRunnerStopper interface {
 
 func Run(ctx context.Context, cli creatorRunnerStopper, task *model.Task) error {
 	ccfg := &container.Config{
-		Env:   getJobEnv(task.Source.SiteID, task.Source.URL),
+		Env:   getJobEnv(task),
 		Image: "availability:job",
 	}
 	hcfg := &container.HostConfig{

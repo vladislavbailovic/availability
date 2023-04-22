@@ -1,6 +1,7 @@
 package main
 
 import (
+	"availability/pkg/data/model"
 	"fmt"
 	"net/url"
 	"strings"
@@ -11,6 +12,7 @@ type envName uint
 const (
 	envSiteID envName = iota
 	envSiteURL
+	envPreviouslyDown
 
 	_envNamesCount
 )
@@ -21,6 +23,8 @@ func (x envName) String() string {
 		return "AVBL_SITE_ID"
 	case envSiteURL:
 		return "AVBL_SITE_URL"
+	case envPreviouslyDown:
+		return "AVBL_PREVIOUSLY_DOWN"
 	default:
 		panic("unknown env var")
 	}
@@ -39,9 +43,14 @@ func getJobName(siteID int32, siteURL string) string {
 	return b.String()
 }
 
-func getJobEnv(siteID int32, siteURL string) []string {
+func getJobEnv(task *model.Task) []string {
+	down := 0
+	if task.WasPreviouslyDown() {
+		down = 1
+	}
 	return []string{
-		fmt.Sprintf("%s=%d", envSiteID.String(), siteID),
-		fmt.Sprintf("%s=%s", envSiteURL.String(), siteURL),
+		fmt.Sprintf("%s=%d", envSiteID.String(), task.Source.SiteID),
+		fmt.Sprintf("%s=%s", envSiteURL.String(), task.Source.URL),
+		fmt.Sprintf("%s=%d", envPreviouslyDown.String(), down),
 	}
 }
