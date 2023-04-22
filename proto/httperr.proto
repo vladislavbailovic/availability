@@ -1,0 +1,54 @@
+syntax = "proto3";
+package definitions;
+
+option go_package = "pkg/data/model";
+
+enum HttpErr {
+	HTTPERR_NONE     = 0;
+	HTTPERR_INTERNAL = 1;
+
+	HTTPERR_OK   = 200;
+
+	HTTPERR_BAD_REQUEST                     = 400;
+	HTTPERR_UNAUTHORIZED                    = 401;
+	HTTPERR_PAYMENT_REQUIRED                = 402;
+	HTTPERR_FORBIDDEN                       = 403;
+	HTTPERR_NOT_FOUND                       = 404;
+	HTTPERR_METHOD_NOT_ALLOWED              = 405;
+	HTTPERR_NOT_ACCEPTABLE                  = 406;
+	HTTPERR_PROXY_AUTH_REQUIRED             = 407;
+	HTTPERR_REQUEST_TIMEOUT                 = 408;
+	HTTPERR_CONFLICT                        = 409;
+	HTTPERR_GONE                            = 410;
+	HTTPERR_LENGTH_REQUIRED                 = 411;
+	HTTPERR_PRECONDITION_FAILED             = 412;
+	HTTPERR_REQUEST_ENTITY_TOO_LARGE        = 413;
+	HTTPERR_REQUEST_URI_TOO_LONG            = 414;
+	HTTPERR_UNSUPPORTEDMEDIATYPE            = 415;
+	HTTPERR_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+	HTTPERR_EXPECTATION_FAILED              = 417;
+	HTTPERR_TEAPOT                          = 418;
+	HTTPERR_MISDIRECTED_REQUEST             = 421;
+	HTTPERR_UNPROCESSABLE_ENTITY            = 422;
+	HTTPERR_LOCKED                          = 423;
+	HTTPERR_FAILED_DEPENDENCY               = 424;
+	HTTPERR_TOO_EARLY                       = 425;
+	HTTPERR_UPGRADE_REQUIRED                = 426;
+	HTTPERR_PRECONDITION_REQUIRED           = 428;
+	HTTPERR_TOO_MANY_REQUESTS               = 429;
+	HTTPERR_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;
+	HTTPERR_UNAVAILABLE_FOR_LEGAL_REASONS   = 451;
+
+
+	HTTPERR_INTERNAL_SERVER_ERROR           = 500;
+	HTTPERR_NOT_IMPLEMENTED                 = 501;
+	HTTPERR_BAD_GATEWAY                     = 502;
+	HTTPERR_SERVICE_UNAVAILABLE             = 503;
+	HTTPERR_GATEWAY_TIMEOUT                 = 504;
+	HTTPERR_HTTP_VERSION_NOT_SUPPORTED      = 505;
+	HTTPERR_VARIANT_ALSO_NEGOTIATES         = 506;
+	HTTPERR_INSUFFICIENT_STORAGE            = 507;
+	HTTPERR_LOOP_DETECTED                   = 508;
+	HTTPERR_NOT_EXTENDED                    = 510;
+	HTTPERR_NETWORK_AUTHENTICATION_REQUIRED = 511;
+}

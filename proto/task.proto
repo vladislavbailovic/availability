@@ -1,0 +1,12 @@
+syntax = "proto3";
+package definitions;
+
+import "probe.proto";
+import "source.proto";
+
+option go_package = "pkg/data/model";
+
+message Task {
+	Source Source   = 1;
+	Probe  Previous = 2;
+}

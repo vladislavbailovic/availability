@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"availability/pkg/data/model"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -28,21 +30,21 @@ type creatorRunnerStopper interface {
 	creatorRunner
 }
 
-func Run(ctx context.Context, cli creatorRunnerStopper, siteID int, siteURL string) error {
+func Run(ctx context.Context, cli creatorRunnerStopper, task *model.Task) error {
 	ccfg := &container.Config{
-		Env:   getJobEnv(siteID, siteURL),
+		Env:   getJobEnv(task.Source.SiteID, task.Source.URL),
 		Image: "availability:job",
 	}
 	hcfg := &container.HostConfig{
 		AutoRemove: true,
 	}
-	jobName := getJobName(siteID, siteURL)
+	jobName := getJobName(task.Source.SiteID, task.Source.URL)
 	resp, err := cli.ContainerCreate(ctx, ccfg, hcfg, nil, nil, jobName)
 	if err != nil {
 		log.Printf("Error starting container: %v", err)
 		log.Println("Possibly a runaway task. Re-starting")
 		if errdefs.IsConflict(err) {
-			if err := Stop(ctx, cli, siteID, siteURL); err != nil {
+			if err := Stop(ctx, cli, task.Source.SiteID, task.Source.URL); err != nil {
 				log.Println("Giving up")
 				return err
 			}
@@ -69,7 +71,7 @@ func Run(ctx context.Context, cli creatorRunnerStopper, siteID int, siteURL stri
 	return nil
 }
 
-func Stop(ctx context.Context, cli stopper, siteID int, siteURL string) error {
+func Stop(ctx context.Context, cli stopper, siteID int32, siteURL string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 

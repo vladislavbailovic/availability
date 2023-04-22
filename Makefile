@@ -1,3 +1,5 @@
+protobuf:
+	protoc -I=proto --go_out=. proto/*.proto
 cover:
 	go test ./... -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o coverage.html

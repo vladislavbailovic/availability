@@ -26,7 +26,7 @@ func (x envName) String() string {
 	}
 }
 
-func getJobName(siteID int, siteURL string) string {
+func getJobName(siteID int32, siteURL string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "ping-%d", siteID)
 
@@ -39,7 +39,7 @@ func getJobName(siteID int, siteURL string) string {
 	return b.String()
 }
 
-func getJobEnv(siteID int, siteURL string) []string {
+func getJobEnv(siteID int32, siteURL string) []string {
 	return []string{
 		fmt.Sprintf("%s=%d", envSiteID.String(), siteID),
 		fmt.Sprintf("%s=%s", envSiteURL.String(), siteURL),

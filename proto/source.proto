@@ -1,0 +1,15 @@
+syntax = "proto3";
+package definitions;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "pkg/data/model";
+
+message Source {
+	int32                     SiteID  = 1;
+	string                    URL     = 2;
+	google.protobuf.Timestamp Created = 3;
+	google.protobuf.Timestamp Changed = 4;
+	bool                      Active  = 5;
+}
+

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"availability/pkg/data/model"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -27,14 +29,26 @@ func Test_StopContainer(t *testing.T) {
 
 func Test_RunContainer_ConflictResolved(t *testing.T) {
 	s := new(fakeCRSOneConflictError)
-	if err := Run(context.TODO(), s, 1312, "test"); err != nil {
+	task := &model.Task{
+		Source: &model.Source{
+			SiteID: 1312,
+			URL:    "test",
+		},
+	}
+	if err := Run(context.TODO(), s, task); err != nil {
 		t.Errorf("expected conflict to resolve")
 	}
 }
 
 func Test_RunContainer_ConflictRepeated(t *testing.T) {
 	s := new(fakeCRSRepeatedConflict)
-	if err := Run(context.TODO(), s, 1312, "test"); err == nil {
+	task := &model.Task{
+		Source: &model.Source{
+			SiteID: 1312,
+			URL:    "test",
+		},
+	}
+	if err := Run(context.TODO(), s, task); err == nil {
 		t.Error("repeated conflict should error out")
 	} else if !errdefs.IsConflict(err) {
 		t.Errorf("unexpected error: %T %v", err, err)
@@ -43,7 +57,13 @@ func Test_RunContainer_ConflictRepeated(t *testing.T) {
 
 func Test_RunContainer_HappyPath(t *testing.T) {
 	s := new(fakeCRSHappyPath)
-	if err := Run(context.TODO(), s, 1312, "test"); err != nil {
+	task := &model.Task{
+		Source: &model.Source{
+			SiteID: 1312,
+			URL:    "test",
+		},
+	}
+	if err := Run(context.TODO(), s, task); err != nil {
 		t.Errorf("unexpected error: %T %v", err, err)
 	}
 }
