@@ -28,7 +28,7 @@ func GetActiveTasks(query data.Collector, limit int) ([]*model.Task, error) {
 				log.Printf("WARNING: scan error: %v", err)
 				continue
 			}
-			if s.SiteID == 0 {
+			if !s.IsValid() {
 				continue
 			}
 			t := new(model.Task)
