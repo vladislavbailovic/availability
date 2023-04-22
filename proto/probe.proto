@@ -8,9 +8,9 @@ import "httperr.proto";
 option go_package = "pkg/data/model";
 
 message Probe {
-	int32                     SiteID   = 1;
-	google.protobuf.Timestamp Recorded = 2;
-	google.protobuf.Duration  Duration = 3;
-	HttpErr                   Err      = 4;
-	string                    Msg      = 5;
+	int32                     SiteID       = 1;
+	google.protobuf.Timestamp Recorded     = 2;
+	google.protobuf.Duration  ResponseTime = 3;
+	HttpErr                   Err          = 4;
+	string                    Msg          = 5;
 }
