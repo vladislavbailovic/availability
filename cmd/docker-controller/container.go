@@ -37,6 +37,7 @@ func Run(ctx context.Context, cli creatorRunnerStopper, task *model.Task) error 
 	}
 	hcfg := &container.HostConfig{
 		AutoRemove: true,
+		Links:      []string{"avbl-data"}, // TODO: refactor
 	}
 	jobName := getJobName(task.Source.SiteID, task.Source.URL)
 	resp, err := cli.ContainerCreate(ctx, ccfg, hcfg, nil, nil, jobName)

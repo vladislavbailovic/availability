@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"availability/pkg/data/collections"
-	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
+	"availability/pkg/data/sql"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -45,7 +45,10 @@ func main() {
 
 	ctx := context.Background()
 	for true {
-		run(ctx, siteID, siteURL)
+		err := run(ctx, siteID, siteURL)
+		if err != nil {
+			log.Printf("ERROR: %v", err)
+		}
 		time.Sleep(time.Duration(pingTimeoutSecs) * time.Second)
 	}
 }
@@ -56,13 +59,16 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 
 	tmout := time.Duration(maxResponseDurationSecs+1) * time.Second
 
-	timer := time.AfterFunc(tmout, func() {
-		cancel()
-		log.Println("ERROR! timeout")
-	})
+	timer := time.AfterFunc(tmout, cancel)
 	defer timer.Stop()
 
-	query := new(fakes.ProbeInserter)
+	query := new(sql.ProbeInserter)
+	if err := query.Connect(); err != nil {
+		log.Println("unable to connect:", err)
+		return err
+	}
+	defer query.Disconnect()
+
 	set := new(collections.ProbeSet)
 	confirmation := false
 
@@ -97,30 +103,4 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 
 	timer.Stop()
 	return set.Persist(query)
-}
-
-func Probe(ctx context.Context, siteID int, siteURL string) *model.Probe {
-	p := new(model.Probe)
-
-	done := make(chan struct{})
-	defer close(done)
-
-	timer := time.AfterFunc(20*time.Second, func() {
-		done <- struct{}{}
-	})
-	defer timer.Stop()
-
-	select {
-	case <-ctx.Done():
-		log.Println("\t- Context DONE")
-		return nil
-	case <-done:
-		log.Println("\t- Processing DONE")
-		break
-	}
-	p.SiteID = int32(siteID)
-	p.Err = model.HttpErr_HTTPERR_OK
-	p.Recorded = timestamppb.New(time.Now())
-
-	return p
 }

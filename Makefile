@@ -18,7 +18,7 @@ data:
 		--env MYSQL_ROOT_PASSWORD=root \
 		availability:mysql
 
-run-docker-controller: docker-controller-image job-image
+run-docker-controller: job-image docker-controller-image
 	docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		--link avbl-data \
