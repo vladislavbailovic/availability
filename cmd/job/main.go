@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -36,8 +37,11 @@ func main() {
 	}
 
 	var siteURL string
-	// TODO validate URL
-	siteURL = rawSiteURL
+	lnk, err := url.Parse(rawSiteURL)
+	if err != nil {
+		panic(err)
+	}
+	siteURL = lnk.String()
 
 	ctx := context.Background()
 	for true {
