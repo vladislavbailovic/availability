@@ -10,6 +10,10 @@ type Collector interface {
 	Query(args ...any) (*Scanners, error)
 }
 
+type Inserter interface {
+	Insert(items ...any) error
+}
+
 func IntArgAt(args []any, pos int) int {
 	var x int
 	if len(args) > 0 {
