@@ -58,6 +58,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 	defer cancel()
 
 	tmout := time.Duration(maxResponseDurationSecs+1) * time.Second
+	sleepTmout := time.Duration(maxResponseDurationSecs) * time.Second
 
 	timer := time.AfterFunc(tmout, cancel)
 	defer timer.Stop()
@@ -87,6 +88,9 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 	}
 
 	if confirmation {
+		// TODO better confirmation delay
+		timer.Reset(tmout)
+		time.Sleep(sleepTmout)
 		timer.Reset(tmout)
 		p := ping(ctx, siteID, siteURL)
 		if p != nil {
