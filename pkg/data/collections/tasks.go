@@ -29,8 +29,10 @@ func GetActiveTasks(query data.Collector, limit int, within int) ([]*model.Task,
 			if !s.IsValid() {
 				continue
 			}
+			p.SiteID = s.SiteID
 			t := new(model.Task)
 			t.Source = s
+			t.Previous = p
 			ts = append(ts, t)
 		}
 	}
