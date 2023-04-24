@@ -4,11 +4,16 @@ import (
 	"database/sql"
 	"strings"
 
+	_ "embed"
+
 	"availability/pkg/data"
 	"availability/pkg/data/model"
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+//go:embed queries/insert_probes.sql
+var insertProbesQueryPartial string
 
 type ProbeInserter struct {
 	conn   *sql.DB
@@ -54,8 +59,7 @@ func (x *ProbeInserter) Insert(items ...any) error {
 	if len(vals) == 0 {
 		return nil
 	}
-	query := "INSERT INTO probes (site_id, recorded, response_time, err, msg) VALUES" +
-		strings.Join(vals, ",")
+	query := insertProbesQueryPartial + strings.Join(vals, ",")
 	stmt, err := x.conn.Prepare(query)
 	if err != nil {
 		return err

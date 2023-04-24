@@ -4,10 +4,15 @@ import (
 	"database/sql"
 	"errors"
 
+	_ "embed"
+
 	"availability/pkg/data"
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+//go:embed queries/active_tasks.sql
+var activeTasksQuery string
 
 type TaskCollection struct {
 	conn *sql.DB
@@ -46,13 +51,7 @@ func (x *TaskCollection) Query(args ...any) (*data.Scanners, error) {
 		return nil, err
 	}
 
-	stmt, err := x.conn.Prepare(
-		"SELECT sources.site_id, url, IFNULL(err, 0) as err FROM sources LEFT JOIN (" +
-			"SELECT site_id, err, recorded FROM probes ORDER BY recorded DESC LIMIT 1" +
-			") AS probe ON sources.site_id=probe.site_id " +
-			"WHERE sources.active=1 AND " +
-			"TIMESTAMPDIFF(SECOND, probe.recorded, NOW()) > ? " +
-			"LIMIT ?")
+	stmt, err := x.conn.Prepare(activeTasksQuery)
 	if err != nil {
 		return nil, err
 	}
