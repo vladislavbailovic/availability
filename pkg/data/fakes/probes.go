@@ -3,6 +3,7 @@ package fakes
 import (
 	"log"
 
+	"availability/pkg/data"
 	"availability/pkg/data/model"
 )
 
@@ -10,7 +11,7 @@ type ProbeInserter struct {
 	Probes []*model.Probe
 }
 
-func (x *ProbeInserter) Insert(items ...any) error {
+func (x *ProbeInserter) Insert(items ...any) (data.DataID, error) {
 	for _, item := range items {
 		if p, ok := item.(*model.Probe); ok {
 			log.Printf("Persisting probe for %d:", p.SiteID)
@@ -21,5 +22,5 @@ func (x *ProbeInserter) Insert(items ...any) error {
 			x.Probes = append(x.Probes, p)
 		}
 	}
-	return nil
+	return data.DataID(len(x.Probes)), nil
 }

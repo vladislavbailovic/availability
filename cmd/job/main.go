@@ -19,6 +19,7 @@ import (
 const (
 	pingTimeoutSecs         int = 120
 	maxResponseDurationSecs int = 10
+	maxJobRuns              int = 5
 )
 
 func main() {
@@ -44,7 +45,7 @@ func main() {
 	siteURL = lnk.String()
 
 	ctx := context.Background()
-	for true {
+	for i := 0; i < maxJobRuns; i++ {
 		err := run(ctx, siteID, siteURL)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
@@ -106,5 +107,11 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 	}
 
 	timer.Stop()
-	return set.Persist(query)
+
+	probeId, err := set.Persist(query)
+	if err != nil {
+		return err
+	}
+	log.Printf("TODO: gonna save the outage info if applicable: %d", probeId)
+	return nil
 }

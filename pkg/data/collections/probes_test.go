@@ -51,8 +51,10 @@ func Test_ProbeSet_Persist(t *testing.T) {
 	x.Add(p1)
 
 	query := new(fakes.ProbeInserter)
-	if err := x.Persist(query); err != nil {
+	if id, err := x.Persist(query); err != nil {
 		t.Error("expected successful insert")
+	} else if id == 0 {
+		t.Errorf("expected non-zero ID")
 	}
 
 	if len(x.probes) != len(query.Probes) {

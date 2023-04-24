@@ -39,9 +39,9 @@ func (x *ProbeInserter) Disconnect() {
 	x.conn.Close()
 }
 
-func (x *ProbeInserter) Insert(items ...any) error {
+func (x *ProbeInserter) Insert(items ...any) (data.DataID, error) {
 	if err := x.Connect(); err != nil {
-		return err
+		return 0, err
 	}
 	vals := make([]string, 0, len(items))
 	rpls := make([]any, 0, len(items)*5)
@@ -57,18 +57,19 @@ func (x *ProbeInserter) Insert(items ...any) error {
 		}
 	}
 	if len(vals) == 0 {
-		return nil
+		return 0, nil
 	}
 	query := insertProbesQueryPartial + strings.Join(vals, ",")
 	stmt, err := x.conn.Prepare(query)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(rpls...)
+	res, err := stmt.Exec(rpls...)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	id, err := res.LastInsertId()
+	return data.DataID(id), err
 }

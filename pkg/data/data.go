@@ -7,6 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type DataID int64
+
 type Scanner interface {
 	Scan(dest ...any) error
 }
@@ -17,8 +19,8 @@ type Collector interface {
 	Query(args ...any) (*Scanners, error)
 }
 
-type Inserter interface {
-	Insert(items ...any) error
+type MultiInserter interface {
+	Insert(items ...any) (DataID, error)
 }
 
 func IntArgAt(args []any, pos int) int {

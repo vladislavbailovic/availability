@@ -24,9 +24,9 @@ func (x *ProbeSet) Has(p *model.Probe) bool {
 	return false
 }
 
-func (x *ProbeSet) Persist(query data.Inserter) error {
+func (x *ProbeSet) Persist(query data.MultiInserter) (data.DataID, error) {
 	if len(x.probes) == 0 {
-		return nil
+		return 0, nil
 	}
 	y := make([]any, 0, len(x.probes))
 	for _, p := range x.probes {
