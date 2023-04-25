@@ -35,6 +35,15 @@ func (x *ProbeSet) Persist(query data.MultiInserter) (data.DataID, error) {
 	return query.Insert(y...)
 }
 
+func (x *ProbeSet) IsDown() bool {
+	for _, p := range x.probes {
+		if !p.IsDown() {
+			return false
+		}
+	}
+	return true
+}
+
 func (x *ProbeSet) add(p *model.Probe) {
 	x.probes = append(x.probes, p)
 }

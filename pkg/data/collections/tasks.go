@@ -10,17 +10,18 @@ import (
 func GetActiveTasks(query data.Collector, limit int, within int) ([]*model.Task, error) {
 	ts := make([]*model.Task, 0, limit)
 
-	if res, err := query.Query(within, limit); err != nil {
+	if res, err := query.Query(limit, within); err != nil {
 		return ts, err
 	} else if res == nil {
 		return ts, nil
 	} else {
 		for _, r := range *res {
 			s := new(model.Source)
-			p := new(model.Probe)
+			p := new(model.ProbeRef)
 			err := r.Scan(
 				&s.SiteID,
 				&s.URL,
+				&p.ProbeID,
 				&p.Err)
 			if err != nil {
 				log.Printf("WARNING: scan error: %v", err)
@@ -29,7 +30,6 @@ func GetActiveTasks(query data.Collector, limit int, within int) ([]*model.Task,
 			if !s.IsValid() {
 				continue
 			}
-			p.SiteID = s.SiteID
 			t := new(model.Task)
 			t.Source = s
 			t.Previous = p

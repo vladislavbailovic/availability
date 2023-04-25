@@ -1,4 +1,4 @@
-SELECT sources.site_id, url, IFNULL(err, 0)
+SELECT sources.site_id, url, IFNULL(probe_id, 0), IFNULL(err, 0)
 FROM sources
 	LEFT JOIN (
 		SELECT site_id, MAX(recorded) AS recorded FROM probes GROUP BY site_id

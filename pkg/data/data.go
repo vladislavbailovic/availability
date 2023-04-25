@@ -10,23 +10,35 @@ import (
 type DataID int64
 
 type Scanner interface {
-	Scan(dest ...any) error
+	Scan(...any) error
 }
 
 type Scanners []Scanner
 
 type Collector interface {
-	Query(args ...any) (*Scanners, error)
+	Query(...any) (*Scanners, error)
+}
+
+type Selector interface {
+	Query(...any) (Scanner, error)
 }
 
 type MultiInserter interface {
-	Insert(items ...any) (DataID, error)
+	Insert(...any) (DataID, error)
+}
+
+type Inserter interface {
+	Insert(any) (DataID, error)
+}
+
+type Updater interface {
+	Update(any) error
 }
 
 func IntArgAt(args []any, pos int) int {
 	var x int
-	if len(args) > 0 {
-		if y, ok := args[0].(int); ok {
+	if len(args) >= pos {
+		if y, ok := args[pos].(int); ok {
 			x = y
 		}
 	}

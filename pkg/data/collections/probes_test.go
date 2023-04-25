@@ -61,3 +61,40 @@ func Test_ProbeSet_Persist(t *testing.T) {
 		t.Errorf("want %d, got %d", len(x.probes), len(query.Probes))
 	}
 }
+
+func Test_ProbeSet_IsDown_DownWhenAllAreDown(t *testing.T) {
+	x := new(ProbeSet)
+
+	p := new(model.Probe)
+	p.SiteID = 1312
+	p.Err = model.HttpErr_HTTPERR_NOT_FOUND
+	x.Add(p)
+
+	p1 := new(model.Probe)
+	p1.SiteID = 1312
+	p1.Err = model.HttpErr_HTTPERR_FORBIDDEN
+	p1.Recorded = timestamppb.New(time.Now())
+	x.Add(p1)
+
+	if !x.IsDown() {
+		t.Error("expected probeset to be down")
+	}
+}
+
+func Test_ProbeSet_IsDown_UpWhenAtLeastOneIsUp(t *testing.T) {
+	x := new(ProbeSet)
+
+	p := new(model.Probe)
+	p.SiteID = 1312
+	p.Err = model.HttpErr_HTTPERR_NOT_FOUND
+	x.Add(p)
+
+	p1 := new(model.Probe)
+	p1.SiteID = 1312
+	p1.Recorded = timestamppb.New(time.Now())
+	x.Add(p1)
+
+	if x.IsDown() {
+		t.Error("expected probeset to be up")
+	}
+}

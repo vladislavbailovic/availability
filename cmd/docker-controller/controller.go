@@ -45,9 +45,9 @@ func getJobName(siteID int32, siteURL string) string {
 }
 
 func getJobEnv(task *model.Task) []string {
-	down := 0
+	var down int32 = 0
 	if task.WasPreviouslyDown() {
-		down = 1
+		down = task.Previous.ProbeID
 	}
 	return []string{
 		fmt.Sprintf("%s=%d", envSiteID.String(), task.Source.SiteID),

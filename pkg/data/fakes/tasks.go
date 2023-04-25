@@ -39,7 +39,8 @@ type TaskScanner struct {
 func (x *TaskScanner) Scan(dest ...any) error {
 	assign(dest[0], x.src.ID)  // SiteID
 	assign(dest[1], x.src.URL) // Domain
-	assign(dest[2], nil)       // Err
+	assign(dest[2], 0)         // ProbeID
+	assign(dest[3], nil)       // Err
 	return nil
 }
 

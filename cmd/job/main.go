@@ -22,10 +22,12 @@ const (
 	maxJobRuns              int = 5
 )
 
+var outage *model.Outage
+
 func main() {
 	rawSiteID := os.Getenv("AVBL_SITE_ID")
 	rawSiteURL := os.Getenv("AVBL_SITE_URL")
-	_ = os.Getenv("AVBL_PREVIOUSLY_DOWN")
+	rawIsDown := os.Getenv("AVBL_PREVIOUSLY_DOWN")
 
 	var siteID int
 	if x, err := strconv.Atoi(rawSiteID); err != nil {
@@ -44,14 +46,34 @@ func main() {
 	}
 	siteURL = lnk.String()
 
+	var downProbeID int
+	if x, err := strconv.Atoi(rawIsDown); err == nil || x > 0 {
+		downProbeID = x
+	}
+	log.Printf("Initiating probe job for %d: %s", siteID, siteURL)
+
+	if downProbeID > 0 {
+		log.Printf("Previous down probe: %d (%s)", downProbeID, rawIsDown)
+		outage = getLatestOutage(siteID)
+		if outage != nil {
+			log.Printf("\t- Outage info: down probe %d, up probe %d", outage.DownProbeID, outage.UpProbeID)
+		} else {
+			log.Printf("\t- WARNING: we were supposed to load previous outage but that didn't happen")
+		}
+	} else {
+		log.Println("Site was apparently up")
+	}
+
 	ctx := context.Background()
 	for i := 0; i < maxJobRuns; i++ {
+		log.Printf("Initiating probe cycle %d", i+1)
 		err := run(ctx, siteID, siteURL)
 		if err != nil {
 			log.Printf("ERROR: %v", err)
 		}
 		time.Sleep(time.Duration(pingTimeoutSecs) * time.Second)
 	}
+	log.Println("Done probing, recycling")
 }
 
 func run(ctx context.Context, siteID int, siteURL string) error {
@@ -75,6 +97,8 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 	confirmation := false
 
 	p := ping(ctx, siteID, siteURL)
+	log.Printf("\t- Probe: %d, %dms",
+		p.Err, p.ResponseTime.AsDuration().Milliseconds())
 	if p != nil {
 		set.Add(p)
 		confirmation = p.IsDown()
@@ -94,6 +118,8 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		time.Sleep(sleepTmout)
 		timer.Reset(tmout)
 		p := ping(ctx, siteID, siteURL)
+		log.Printf("\t- Confirmation: %d, %dms",
+			p.Err, p.ResponseTime.AsDuration().Milliseconds())
 		if p != nil {
 			set.Add(p)
 		} else {
@@ -112,6 +138,43 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("TODO: gonna save the outage info if applicable: %d", probeId)
+
+	if outage != nil && !set.IsDown() && probeId != 0 {
+		log.Println("We have ongoing outage and we're back up: closing off outage")
+		outage.UpProbeID = int32(probeId)
+		query := new(sql.OutageUpdater)
+		if err := collections.CloseOffOutage(query, outage); err != nil {
+			return err
+		}
+		outage = nil
+	} else if outage == nil && set.IsDown() && probeId != 0 {
+		log.Println("No outgoing outage and we just went down: starting and persisting new outage")
+		outage = new(model.Outage)
+		outage.SiteID = int32(siteID)
+		outage.DownProbeID = int32(probeId)
+		query := new(sql.OutageInserter)
+		if id, err := collections.CreateNewOutage(query, outage); err != nil {
+			return err
+		} else {
+			outage.OutageID = int32(id)
+		}
+	}
+
 	return nil
+}
+
+func getLatestOutage(siteID int) *model.Outage {
+	query := new(sql.OutageSelection)
+	if err := query.Connect(); err != nil {
+		log.Println("unable to connect:", err)
+		return nil
+	}
+	defer query.Disconnect()
+
+	outage, err := collections.GetSiteOutage(query, siteID)
+	if err != nil {
+		log.Printf("ERROR selecting last outage: %v", err)
+		return nil
+	}
+	return outage
 }

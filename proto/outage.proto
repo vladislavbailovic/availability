@@ -1,0 +1,11 @@
+syntax = "proto3";
+package definitions;
+
+option go_package = "pkg/data/model";
+
+message Outage {
+	int32 OutageID    = 1;
+	int32 SiteID      = 2;
+	int32 DownProbeID = 3;
+	int32 UpProbeID   = 4;
+}

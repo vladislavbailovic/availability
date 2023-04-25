@@ -8,7 +8,7 @@ func Test_WasPreviouslyDown(t *testing.T) {
 		t.Error("should previously be up by default")
 	}
 
-	p := Probe{Err: HttpErr_HTTPERR_INTERNAL}
+	p := ProbeRef{Err: HttpErr_HTTPERR_INTERNAL}
 	task.Previous = &p
 	if !task.WasPreviouslyDown() {
 		t.Error("expected previously to be down when previous probe err set")

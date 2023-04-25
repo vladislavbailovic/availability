@@ -7,6 +7,6 @@ import "source.proto";
 option go_package = "pkg/data/model";
 
 message Task {
-	Source Source   = 1;
-	Probe  Previous = 2;
+	Source   Source   = 1;
+	ProbeRef Previous = 2;
 }
