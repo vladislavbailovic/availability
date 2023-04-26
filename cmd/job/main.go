@@ -22,7 +22,7 @@ const (
 	maxJobRuns              int = 5
 )
 
-var incident *model.Incident
+var activeIncident *model.Incident
 
 func main() {
 	rawSiteID := os.Getenv("AVBL_SITE_ID")
@@ -54,9 +54,9 @@ func main() {
 
 	if downProbeID > 0 {
 		log.Printf("Previous down probe: %d (%s)", downProbeID, rawIsDown)
-		incident = getLatestIncident(siteID)
-		if incident != nil {
-			log.Printf("\t- Incident info: down probe %d, up probe %d", incident.DownProbeID, incident.UpProbeID)
+		activeIncident = getLatestIncident(siteID)
+		if activeIncident != nil {
+			log.Printf("\t- Incident info: down probe %d, up probe %d", activeIncident.DownProbeID, activeIncident.UpProbeID)
 		} else {
 			log.Printf("\t- WARNING: we were supposed to load previous incident but that didn't happen")
 		}
@@ -139,24 +139,24 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		return err
 	}
 
-	if incident != nil && !set.IsDown() && probeId != 0 {
+	if activeIncident != nil && !set.IsDown() && probeId != 0 {
 		log.Println("We have ongoing incident and we're back up: closing off incident")
-		incident.UpProbeID = int32(probeId)
+		activeIncident.UpProbeID = int32(probeId)
 		query := new(sql.IncidentUpdater)
-		if err := collections.CloseOffIncident(query, incident); err != nil {
+		if err := collections.CloseOffIncident(query, activeIncident); err != nil {
 			return err
 		}
-		incident = nil
-	} else if incident == nil && set.IsDown() && probeId != 0 {
+		activeIncident = nil
+	} else if activeIncident == nil && set.IsDown() && probeId != 0 {
 		log.Println("No outgoing incident and we just went down: starting and persisting new incident")
-		incident = new(model.Incident)
-		incident.SiteID = int32(siteID)
-		incident.DownProbeID = int32(probeId)
+		activeIncident = new(model.Incident)
+		activeIncident.SiteID = int32(siteID)
+		activeIncident.DownProbeID = int32(probeId)
 		query := new(sql.IncidentInserter)
-		if id, err := collections.CreateNewIncident(query, incident); err != nil {
+		if id, err := collections.CreateNewIncident(query, activeIncident); err != nil {
 			return err
 		} else {
-			incident.IncidentID = int32(id)
+			activeIncident.IncidentID = int32(id)
 		}
 	}
 
