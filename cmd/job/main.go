@@ -117,7 +117,6 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 			set.Add(p)
 		} else {
 			set.Add(model.NewTimeoutProbe(siteID))
-			set.Add(p)
 		}
 	}
 
