@@ -7,11 +7,11 @@ import (
 	"availability/pkg/data/model"
 )
 
-func GetSiteOutage(query data.Selector, siteID int) (*model.Outage, error) {
+func GetSiteIncident(query data.Selector, siteID int) (*model.Incident, error) {
 	if res, err := query.Query(siteID); err != nil {
 		return nil, err
 	} else {
-		o := new(model.Outage)
+		o := new(model.Incident)
 		err := res.Scan(
 			&o.SiteID,
 			&o.DownProbeID,
@@ -20,22 +20,22 @@ func GetSiteOutage(query data.Selector, siteID int) (*model.Outage, error) {
 	}
 }
 
-func CloseOffOutage(query data.Updater, o *model.Outage) error {
+func CloseOffIncident(query data.Updater, o *model.Incident) error {
 	if o == nil {
-		return errors.New("expected outage")
+		return errors.New("expected incident")
 	}
 	if o.SiteID == 0 || o.DownProbeID == 0 || o.UpProbeID == 0 {
-		return errors.New("invalid outage")
+		return errors.New("invalid incident")
 	}
 	return query.Update(o)
 }
 
-func CreateNewOutage(query data.Inserter, o *model.Outage) (data.DataID, error) {
+func CreateNewIncident(query data.Inserter, o *model.Incident) (data.DataID, error) {
 	if o == nil {
-		return 0, errors.New("expected outage")
+		return 0, errors.New("expected incident")
 	}
 	if o.SiteID == 0 || o.DownProbeID == 0 || o.UpProbeID != 0 {
-		return 0, errors.New("invalid outage")
+		return 0, errors.New("invalid incident")
 	}
 	return query.Insert(o)
 }

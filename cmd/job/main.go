@@ -22,7 +22,7 @@ const (
 	maxJobRuns              int = 5
 )
 
-var outage *model.Outage
+var incident *model.Incident
 
 func main() {
 	rawSiteID := os.Getenv("AVBL_SITE_ID")
@@ -54,11 +54,11 @@ func main() {
 
 	if downProbeID > 0 {
 		log.Printf("Previous down probe: %d (%s)", downProbeID, rawIsDown)
-		outage = getLatestOutage(siteID)
-		if outage != nil {
-			log.Printf("\t- Outage info: down probe %d, up probe %d", outage.DownProbeID, outage.UpProbeID)
+		incident = getLatestIncident(siteID)
+		if incident != nil {
+			log.Printf("\t- Incident info: down probe %d, up probe %d", incident.DownProbeID, incident.UpProbeID)
 		} else {
-			log.Printf("\t- WARNING: we were supposed to load previous outage but that didn't happen")
+			log.Printf("\t- WARNING: we were supposed to load previous incident but that didn't happen")
 		}
 	} else {
 		log.Println("Site was apparently up")
@@ -139,42 +139,42 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		return err
 	}
 
-	if outage != nil && !set.IsDown() && probeId != 0 {
-		log.Println("We have ongoing outage and we're back up: closing off outage")
-		outage.UpProbeID = int32(probeId)
-		query := new(sql.OutageUpdater)
-		if err := collections.CloseOffOutage(query, outage); err != nil {
+	if incident != nil && !set.IsDown() && probeId != 0 {
+		log.Println("We have ongoing incident and we're back up: closing off incident")
+		incident.UpProbeID = int32(probeId)
+		query := new(sql.IncidentUpdater)
+		if err := collections.CloseOffIncident(query, incident); err != nil {
 			return err
 		}
-		outage = nil
-	} else if outage == nil && set.IsDown() && probeId != 0 {
-		log.Println("No outgoing outage and we just went down: starting and persisting new outage")
-		outage = new(model.Outage)
-		outage.SiteID = int32(siteID)
-		outage.DownProbeID = int32(probeId)
-		query := new(sql.OutageInserter)
-		if id, err := collections.CreateNewOutage(query, outage); err != nil {
+		incident = nil
+	} else if incident == nil && set.IsDown() && probeId != 0 {
+		log.Println("No outgoing incident and we just went down: starting and persisting new incident")
+		incident = new(model.Incident)
+		incident.SiteID = int32(siteID)
+		incident.DownProbeID = int32(probeId)
+		query := new(sql.IncidentInserter)
+		if id, err := collections.CreateNewIncident(query, incident); err != nil {
 			return err
 		} else {
-			outage.OutageID = int32(id)
+			incident.IncidentID = int32(id)
 		}
 	}
 
 	return nil
 }
 
-func getLatestOutage(siteID int) *model.Outage {
-	query := new(sql.OutageSelection)
+func getLatestIncident(siteID int) *model.Incident {
+	query := new(sql.IncidentSelection)
 	if err := query.Connect(); err != nil {
 		log.Println("unable to connect:", err)
 		return nil
 	}
 	defer query.Disconnect()
 
-	outage, err := collections.GetSiteOutage(query, siteID)
+	incident, err := collections.GetSiteIncident(query, siteID)
 	if err != nil {
-		log.Printf("ERROR selecting last outage: %v", err)
+		log.Printf("ERROR selecting last incident: %v", err)
 		return nil
 	}
-	return outage
+	return incident
 }

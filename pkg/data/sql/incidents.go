@@ -14,19 +14,19 @@ import (
 )
 
 var (
-	//go:embed queries/last_site_outage.sql
-	lastSiteOutageQuery string
-	//go:embed queries/update_outage.sql
-	updateOutageQuery string
-	//go:embed queries/insert_outage.sql
-	insertOutageQuery string
+	//go:embed queries/last_site_incident.sql
+	lastSiteIncidentQuery string
+	//go:embed queries/update_incident.sql
+	updateIncidentQuery string
+	//go:embed queries/insert_incident.sql
+	insertIncidentQuery string
 )
 
-type OutageSelection struct {
+type IncidentSelection struct {
 	conn *sql.DB
 }
 
-func (x *OutageSelection) Connect() error {
+func (x *IncidentSelection) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
@@ -38,14 +38,14 @@ func (x *OutageSelection) Connect() error {
 	return nil
 }
 
-func (x *OutageSelection) Disconnect() {
+func (x *IncidentSelection) Disconnect() {
 	if x.conn == nil {
 		return
 	}
 	x.conn.Close()
 }
 
-func (x *OutageSelection) Query(args ...any) (data.Scanner, error) {
+func (x *IncidentSelection) Query(args ...any) (data.Scanner, error) {
 	siteID := data.IntArgAt(args, 0)
 	if siteID == 0 {
 		return nil, errors.New("expected site ID")
@@ -55,21 +55,21 @@ func (x *OutageSelection) Query(args ...any) (data.Scanner, error) {
 		return nil, err
 	}
 
-	stmt, err := x.conn.Prepare(lastSiteOutageQuery)
+	stmt, err := x.conn.Prepare(lastSiteIncidentQuery)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
 	row := stmt.QueryRow(siteID)
-	return outageSelectionScanner{row}, nil
+	return incidentSelectionScanner{row}, nil
 }
 
-type OutageUpdater struct {
+type IncidentUpdater struct {
 	conn *sql.DB
 }
 
-func (x *OutageUpdater) Connect() error {
+func (x *IncidentUpdater) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
@@ -81,24 +81,24 @@ func (x *OutageUpdater) Connect() error {
 	return nil
 }
 
-func (x *OutageUpdater) Disconnect() {
+func (x *IncidentUpdater) Disconnect() {
 	if x.conn == nil {
 		return
 	}
 	x.conn.Close()
 }
 
-func (x *OutageUpdater) Update(v any) error {
-	o, ok := v.(*model.Outage)
+func (x *IncidentUpdater) Update(v any) error {
+	o, ok := v.(*model.Incident)
 	if !ok {
-		return errors.New("expected outage")
+		return errors.New("expected incident")
 	}
 
 	if err := x.Connect(); err != nil {
 		return err
 	}
 
-	stmt, err := x.conn.Prepare(updateOutageQuery)
+	stmt, err := x.conn.Prepare(updateIncidentQuery)
 	if err != nil {
 		return err
 	}
@@ -108,11 +108,11 @@ func (x *OutageUpdater) Update(v any) error {
 	return err
 }
 
-type OutageInserter struct {
+type IncidentInserter struct {
 	conn *sql.DB
 }
 
-func (x *OutageInserter) Connect() error {
+func (x *IncidentInserter) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
@@ -124,24 +124,24 @@ func (x *OutageInserter) Connect() error {
 	return nil
 }
 
-func (x *OutageInserter) Disconnect() {
+func (x *IncidentInserter) Disconnect() {
 	if x.conn == nil {
 		return
 	}
 	x.conn.Close()
 }
 
-func (x *OutageInserter) Insert(v any) (data.DataID, error) {
-	o, ok := v.(*model.Outage)
+func (x *IncidentInserter) Insert(v any) (data.DataID, error) {
+	o, ok := v.(*model.Incident)
 	if !ok {
-		return 0, errors.New("expected outage")
+		return 0, errors.New("expected incident")
 	}
 
 	if err := x.Connect(); err != nil {
 		return 0, err
 	}
 
-	stmt, err := x.conn.Prepare(insertOutageQuery)
+	stmt, err := x.conn.Prepare(insertIncidentQuery)
 	if err != nil {
 		return 0, err
 	}
@@ -155,11 +155,11 @@ func (x *OutageInserter) Insert(v any) (data.DataID, error) {
 	return data.DataID(id), err
 }
 
-type outageSelectionScanner struct {
+type incidentSelectionScanner struct {
 	r *sql.Row
 }
 
-func (x outageSelectionScanner) Scan(dest ...any) error {
+func (x incidentSelectionScanner) Scan(dest ...any) error {
 	err := x.r.Scan(dest...)
 	if err != nil {
 		log.Println(err)
