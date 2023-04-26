@@ -131,6 +131,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		log.Println("We have ongoing incident and we're back up: closing off incident")
 		activeIncident.Close(probeId.ToNumericID())
 		query := new(sql.IncidentUpdater)
+		defer query.Disconnect()
 		if err := collections.CloseOffIncident(query, activeIncident); err != nil {
 			return err
 		}
@@ -139,6 +140,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		log.Println("No outgoing incident and we just went down: starting and persisting new incident")
 		activeIncident = model.NewIncident(siteID, probeId.ToNumericID())
 		query := new(sql.IncidentInserter)
+		defer query.Disconnect()
 		if id, err := collections.CreateNewIncident(query, activeIncident); err != nil {
 			return err
 		} else {
