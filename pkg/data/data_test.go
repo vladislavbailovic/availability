@@ -27,3 +27,16 @@ func Test_IntArgAt(t *testing.T) {
 		}
 	}(161, 13, 12)
 }
+
+func Test_DataID_ToIDs(t *testing.T) {
+	var want1 int32 = 1312
+	x := DataID(1312)
+	if x.ToItemID() != want1 {
+		t.Error("item id conversion failed")
+	}
+
+	var want2 int = 1312
+	if x.ToNumericID() != want2 {
+		t.Error("numeric id conversion failed")
+	}
+}

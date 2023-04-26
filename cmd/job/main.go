@@ -12,8 +12,6 @@ import (
 	"availability/pkg/data/collections"
 	"availability/pkg/data/model"
 	"availability/pkg/data/sql"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -103,12 +101,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		set.Add(p)
 		confirmation = p.IsDown()
 	} else {
-		p := new(model.Probe)
-		p.SiteID = int32(siteID)
-		p.Recorded = timestamppb.New(time.Now())
-		p.Err = model.HttpErr_HTTPERR_INTERNAL
-		p.Msg = "Timeout"
-		set.Add(p)
+		set.Add(model.NewTimeoutProbe(siteID))
 		confirmation = true
 	}
 
@@ -123,11 +116,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		if p != nil {
 			set.Add(p)
 		} else {
-			p := new(model.Probe)
-			p.SiteID = int32(siteID)
-			p.Recorded = timestamppb.New(time.Now())
-			p.Err = model.HttpErr_HTTPERR_INTERNAL
-			p.Msg = "Timeout"
+			set.Add(model.NewTimeoutProbe(siteID))
 			set.Add(p)
 		}
 	}
@@ -141,7 +130,7 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 
 	if activeIncident != nil && !set.IsDown() && probeId != 0 {
 		log.Println("We have ongoing incident and we're back up: closing off incident")
-		activeIncident.UpProbeID = int32(probeId)
+		activeIncident.Close(probeId.ToNumericID())
 		query := new(sql.IncidentUpdater)
 		if err := collections.CloseOffIncident(query, activeIncident); err != nil {
 			return err
@@ -149,14 +138,12 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		activeIncident = nil
 	} else if activeIncident == nil && set.IsDown() && probeId != 0 {
 		log.Println("No outgoing incident and we just went down: starting and persisting new incident")
-		activeIncident = new(model.Incident)
-		activeIncident.SiteID = int32(siteID)
-		activeIncident.DownProbeID = int32(probeId)
+		activeIncident = model.NewIncident(siteID, probeId.ToNumericID())
 		query := new(sql.IncidentInserter)
 		if id, err := collections.CreateNewIncident(query, activeIncident); err != nil {
 			return err
 		} else {
-			activeIncident.IncidentID = int32(id)
+			activeIncident.IncidentID = id.ToItemID()
 		}
 	}
 

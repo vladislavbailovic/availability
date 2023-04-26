@@ -9,6 +9,14 @@ import (
 
 type DataID int64
 
+func (x DataID) ToItemID() int32 {
+	return int32(x)
+}
+
+func (x DataID) ToNumericID() int {
+	return int(x)
+}
+
 type Scanner interface {
 	Scan(...any) error
 }
