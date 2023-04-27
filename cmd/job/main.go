@@ -69,7 +69,17 @@ func main() {
 		if err != nil {
 			log.Printf("ERROR: %v", err)
 		}
-		time.Sleep(time.Duration(pingTimeoutSecs) * time.Second)
+		if i < maxJobRuns-1 {
+			// Don't pause if we're about to break,
+			// so we don't skip a beat.
+			time.Sleep(time.Duration(pingTimeoutSecs) * time.Second)
+		} else {
+			// Well, actually...
+			// *Do* pause, but only by a fraction.
+			// This is in order to minimize the changes of skipping
+			// a beat when scheduler picks up the job again.
+			time.Sleep(time.Duration(pingTimeoutSecs/4) * time.Second)
+		}
 	}
 	log.Println("Done probing, recycling")
 }
