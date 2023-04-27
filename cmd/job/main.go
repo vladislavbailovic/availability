@@ -54,9 +54,10 @@ func main() {
 		log.Printf("Previous down probe: %d (%s)", downProbeID, rawIsDown)
 		activeIncident = getLatestIncident(siteID)
 		if activeIncident != nil {
-			log.Printf("\t- Incident info: down probe %d, up probe %d", activeIncident.DownProbeID, activeIncident.UpProbeID)
+			log.Printf("\t- Incident info: down probe %d, up probe %d",
+				activeIncident.DownProbeID, activeIncident.UpProbeID)
 		} else {
-			log.Printf("\t- WARNING: we were supposed to load previous incident but that didn't happen")
+			log.Printf("\t- WARNING: did not load previous incident; we should have")
 		}
 	} else {
 		log.Println("Site was apparently up")
@@ -147,7 +148,8 @@ func run(ctx context.Context, siteID int, siteURL string) error {
 		}
 		activeIncident = nil
 	} else if activeIncident == nil && set.IsDown() && probeId != 0 {
-		log.Println("No outgoing incident and we just went down: starting and persisting new incident")
+		log.Println("No ongoing incident and site went down: " +
+			"starting and persisting new incident")
 		activeIncident = model.NewIncident(siteID, probeId.ToNumericID())
 		query := new(sql.IncidentInserter)
 		defer query.Disconnect()
