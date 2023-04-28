@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
+	"availability/pkg/data"
 	"availability/pkg/data/collections"
 	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
@@ -30,10 +32,19 @@ func main() {
 			},
 		},
 	}
-	r, err := collections.GetIncidentReportsFor(query, 1312, time.Duration(7*24)*time.Hour)
+	weekAgo := time.Duration(7*24) * time.Hour
+	now := data.TimestampFromDatetime("2013-12-01 00:00:00").AsTime()
+	r, err := collections.GetIncidentReportsFor(query, 1312, weekAgo)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(r)
+	maker := incidentReportGraphMaker{
+		start:      now.AddDate(0, 0, -3),
+		end:        now.AddDate(0, 0, 4),
+		resolution: time.Hour,
+		reports:    r,
+	}
+
+	os.WriteFile("tmp/test.svg", []byte(maker.Make().Render()), 0600)
 }
