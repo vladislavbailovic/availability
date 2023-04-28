@@ -66,6 +66,7 @@ type svg struct {
 
 func (x *svg) Render() string {
 	var b strings.Builder
+	style := Stylesheet{}
 
 	width := 1000.0
 	height := 50.0
@@ -73,8 +74,8 @@ func (x *svg) Render() string {
 
 	fmt.Fprintf(&b, `<svg version="1.1" width="%d" height="%d" xmlns="%s">`,
 		int64(width), int64(height), xmlns)
-	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" fill="green" />`,
-		int64(width), int64(height))
+	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
+		int64(width), int64(height), StylenameMain)
 
 	for _, r := range x.blocks {
 		x := int64(r.GetP1() * width)
@@ -82,10 +83,41 @@ func (x *svg) Render() string {
 		if w < 1 {
 			w = 1
 		}
-		fmt.Fprintf(&b, `<rect x="%d" y="0" width="%d" height="%d" fill="red" />`,
-			x, w, int64(height))
+		fmt.Fprintf(&b, `<rect x="%d" y="0" width="%d" height="%d" class="%s" />`,
+			x, w, int64(height), StylenameSegment)
 	}
+	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
 	fmt.Fprintf(&b, "</svg>")
+
+	return b.String()
+}
+
+type Stylename uint16
+
+const (
+	StylenameMain Stylename = iota
+	StylenameSegment
+)
+
+func (x Stylename) String() string {
+	switch x {
+	case StylenameMain:
+		return "main"
+	case StylenameSegment:
+		return "segment"
+	default:
+		panic("unknown stylename")
+	}
+}
+
+type Stylesheet struct{}
+
+func (x Stylesheet) Render() string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, `.%s { fill: green }`, StylenameMain)
+	fmt.Fprintf(&b, `.%s { fill: #cc0000 }`, StylenameSegment)
+	fmt.Fprintf(&b, `.%s:hover { fill: #ff0000 }`, StylenameSegment)
 
 	return b.String()
 }
