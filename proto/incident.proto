@@ -1,11 +1,24 @@
 syntax = "proto3";
 package definitions;
 
+import "google/protobuf/timestamp.proto";
+import "httperr.proto";
+
 option go_package = "pkg/data/model";
 
 message Incident {
-	int32 IncidentID    = 1;
+	int32 IncidentID  = 1;
 	int32 SiteID      = 2;
 	int32 DownProbeID = 3;
 	int32 UpProbeID   = 4;
+}
+
+message IncidentReport {
+	int32                     IncidentID     = 1;
+	int32                     SiteID         = 2;
+	string                    URL            = 3;
+	google.protobuf.Timestamp Started        = 5;
+	HttpErr                   Err            = 6;
+	string                    Msg            = 7;
+	google.protobuf.Timestamp Ended          = 9;
 }
