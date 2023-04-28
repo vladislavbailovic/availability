@@ -39,3 +39,22 @@ func CreateNewIncident(query data.Inserter, o *model.Incident) (data.DataID, err
 	}
 	return query.Insert(o)
 }
+
+func GetIncidentReportFor(query data.Selector, siteID int) (*model.IncidentReport, error) {
+	if res, err := query.Query(siteID); err != nil {
+		return nil, err
+	} else {
+		var started, ended string
+		r := new(model.IncidentReport)
+		err := res.Scan(
+			&r.SiteID,
+			&r.URL,
+			&started,
+			&r.Err,
+			&r.Msg,
+			&ended)
+		r.Started = data.TimestampFromDatetime(started)
+		r.Ended = data.TimestampFromDatetime(ended)
+		return r, err
+	}
+}
