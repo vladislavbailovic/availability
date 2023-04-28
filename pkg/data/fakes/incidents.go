@@ -43,6 +43,25 @@ func (x *IncidentReportScanner) Query(args ...any) (data.Scanner, error) {
 	return data.Scanner(&res), nil
 }
 
+type IncidentReportCollector struct {
+	Reports []Report
+}
+
+func (x *IncidentReportCollector) Query(args ...any) (*data.Scanners, error) {
+	siteID := data.IntArgAt(args, 0)
+	if siteID == 0 {
+		return nil, errors.New("expected siteID")
+	}
+
+	res := make([]data.Scanner, 0, len(x.Reports))
+	for _, r := range x.Reports {
+		s := reportScanner{r: r}
+		res = append(res, data.Scanner(&s))
+	}
+	scanners := data.Scanners(res)
+	return &scanners, nil
+}
+
 type reportScanner struct {
 	r Report
 }

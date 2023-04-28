@@ -2,6 +2,8 @@ package collections
 
 import (
 	"errors"
+	"log"
+	"time"
 
 	"availability/pkg/data"
 	"availability/pkg/data/model"
@@ -56,5 +58,32 @@ func GetIncidentReportFor(query data.Selector, siteID int) (*model.IncidentRepor
 		r.Started = data.TimestampFromDatetime(started)
 		r.Ended = data.TimestampFromDatetime(ended)
 		return r, err
+	}
+}
+
+func GetIncidentReportsFor(query data.Collector, siteID int, since time.Duration) ([]*model.IncidentReport, error) {
+	rs := make([]*model.IncidentReport, 0)
+	if res, err := query.Query(siteID, since); err != nil {
+		return rs, err
+	} else {
+		for _, result := range *res {
+			var started, ended string
+			r := new(model.IncidentReport)
+			err := result.Scan(
+				&r.SiteID,
+				&r.URL,
+				&started,
+				&r.Err,
+				&r.Msg,
+				&ended)
+			if err != nil {
+				log.Printf("WARNING: scan error: %v", err)
+				continue
+			}
+			r.Started = data.TimestampFromDatetime(started)
+			r.Ended = data.TimestampFromDatetime(ended)
+			rs = append(rs, r)
+		}
+		return rs, nil
 	}
 }
