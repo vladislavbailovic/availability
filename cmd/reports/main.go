@@ -42,7 +42,7 @@ func main() {
 	maker := incidentReportGraphMaker{
 		start:      now.AddDate(0, 0, -3),
 		end:        now.AddDate(0, 0, 4),
-		resolution: time.Hour,
+		resolution: time.Hour * 24,
 		reports:    r,
 	}
 
