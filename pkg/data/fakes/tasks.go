@@ -58,5 +58,9 @@ func assign(dest any, val any) {
 		if d != nil {
 			*d = int32(val.(int))
 		}
+	case *int:
+		if d != nil {
+			*d = val.(int)
+		}
 	}
 }

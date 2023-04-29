@@ -169,7 +169,7 @@ func (x Stylesheet) Render() string {
 	fmt.Fprintf(&b, `.%s.%s .period { fill: green; stroke: black; }`, StylenameSegment, segmentOK)
 	fmt.Fprintf(&b, `.%s.%s .period { fill: #cc0000 }`, StylenameSegment, segmentError)
 	fmt.Fprintf(&b, `.%s .label { transform: translate(0, 1em); display: none }`, StylenameSegment)
-	fmt.Fprintf(&b, `.%s.%:hover .period { fill: #ff0000 }`, StylenameSegment, segmentError)
+	fmt.Fprintf(&b, `.%s.%s:hover .period { fill: #ff0000 }`, StylenameSegment, segmentError)
 	fmt.Fprintf(&b, `.%s:hover .label { display: block }`, StylenameSegment)
 
 	return b.String()

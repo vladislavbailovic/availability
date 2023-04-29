@@ -12,6 +12,73 @@ import (
 )
 
 func main() {
+	dailyResponseTimesPlot("tmp/test.svg")
+}
+
+func dailyResponseTimesPlot(outfile string) {
+	query := &fakes.ProbeCollector{
+		Probes: []fakes.Probe{
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:10:00",
+				ResponseTime: 161,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:12:00",
+				ResponseTime: 13,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:14:00",
+				ResponseTime: 12,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:16:00",
+				ResponseTime: 161,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:18:00",
+				ResponseTime: 16,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:20:00",
+				ResponseTime: 161,
+				Err:          200,
+				Msg:          "",
+			},
+			fakes.Probe{
+				SiteID:       1312,
+				Recorded:     "2013-12-01 16:22:00",
+				ResponseTime: 80,
+				Err:          200,
+				Msg:          "",
+			},
+		},
+	}
+	// now := data.TimestampFromDatetime("2013-12-01 00:00:00").AsTime()
+	r, err := collections.GetProbesForWithin(query, 1312, 24*time.Hour)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(r)
+}
+
+func weeklyIncidentsGraph(outfile string) {
 	query := &fakes.IncidentReportCollector{
 		Reports: []fakes.Report{
 			fakes.Report{
@@ -46,5 +113,5 @@ func main() {
 		reports:    r,
 	}
 
-	os.WriteFile("tmp/test.svg", []byte(maker.Make().Render()), 0600)
+	os.WriteFile(outfile, []byte(maker.Make().Render()), 0600)
 }
