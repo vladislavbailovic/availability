@@ -9,6 +9,7 @@ import (
 	"availability/pkg/data/collections"
 	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
+	"availability/pkg/graph"
 )
 
 func main() {
@@ -76,14 +77,15 @@ func dailyResponseTimesPlot(outfile string) {
 	}
 
 	maker := responseTimesPlotMaker{
-		graphMeta: graphMeta{
-			start:      now,
-			end:        now.Add(time.Hour),
-			resolution: time.Duration(4) * time.Minute,
+		Meta: graph.Meta{
+			Start:      now,
+			End:        now.Add(time.Hour),
+			Resolution: time.Duration(4) * time.Minute,
 		},
 		probes: r,
 	}
-	os.WriteFile(outfile, []byte(maker.Make().Render()), 0600)
+	image := maker.Make().Render()
+	os.WriteFile(outfile, []byte(image), 0600)
 
 }
 
@@ -116,13 +118,14 @@ func weeklyIncidentsGraph(outfile string) {
 	}
 
 	maker := incidentReportGraphMaker{
-		graphMeta: graphMeta{
-			start:      now.AddDate(0, 0, -3),
-			end:        now.AddDate(0, 0, 4),
-			resolution: time.Hour * 24,
+		Meta: graph.Meta{
+			Start:      now.AddDate(0, 0, -3),
+			End:        now.AddDate(0, 0, 4),
+			Resolution: time.Hour * 24,
 		},
 		reports: r,
 	}
 
-	os.WriteFile(outfile, []byte(maker.Make().Render()), 0600)
+	image := maker.Make().Render()
+	os.WriteFile(outfile, []byte(image), 0600)
 }

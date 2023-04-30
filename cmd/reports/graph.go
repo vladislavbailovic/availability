@@ -1,29 +1,19 @@
 package main
 
 import (
-	"availability/pkg/data/model"
 	"fmt"
 	"math"
 	"strings"
 	"time"
+
+	"availability/pkg/data/model"
+	"availability/pkg/graph"
+	"availability/pkg/graph/segment"
+	"availability/pkg/graph/style"
 )
 
-type renderer interface {
-	Render() string
-}
-
-type graphMaker interface {
-	Make() renderer
-}
-
-type graphMeta struct {
-	start      time.Time
-	end        time.Time
-	resolution time.Duration
-}
-
 type responseTimesPlotMaker struct {
-	graphMeta
+	graph.Meta
 	probes []*model.Probe
 }
 
@@ -34,7 +24,7 @@ type rawPoint struct {
 
 const curveDelta float64 = 10
 
-func (x responseTimesPlotMaker) Make() renderer {
+func (x responseTimesPlotMaker) Make() graph.Renderer {
 	return x.makeProbesWithinResolutionPlot()
 }
 
@@ -48,10 +38,10 @@ func (x responseTimesPlotMaker) Make() renderer {
 // for that interval on the graph.
 //
 // Returns a renderer interface, which is used by the exporter to write the graph to the output file.
-func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
-	res := x.resolution.Milliseconds()
-	frames := x.end.Sub(x.start).Milliseconds() / res
-	points := make([]segment, 0, frames)
+func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() graph.Renderer {
+	res := x.Resolution.Milliseconds()
+	frames := x.End.Sub(x.Start).Milliseconds() / res
+	points := make([]segment.Section, 0, frames)
 
 	// data is a map containing a rawPoint for each interval
 	data := map[int64]*rawPoint{}
@@ -62,7 +52,7 @@ func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
 
 	// assert x.start > x.end - res
 	// assert res > probe interval
-	for i := x.start.UnixMilli(); i < x.end.UnixMilli()-res; i += res {
+	for i := x.Start.UnixMilli(); i < x.End.UnixMilli()-res; i += res {
 		for _, p := range x.probes {
 			dt := p.ResponseTime.AsDuration().Milliseconds()
 			if dt < minTime {
@@ -91,9 +81,9 @@ func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
 	deltaTime := float64(maxTime-minTime) / float64(res)
 
 	// iterate through all the rawPoints, calculate the mean response time and generate a point for that interval on the graph
-	for i := x.start.UnixMilli(); i < x.end.UnixMilli()-res; i += res {
+	for i := x.Start.UnixMilli(); i < x.End.UnixMilli()-res; i += res {
 		if rp, ok := data[i]; ok {
-			posTime := rp.t.Sub(x.start)
+			posTime := rp.t.Sub(x.Start)
 			position := float64(posTime.Milliseconds()) / float64(res)
 			var sum int64
 			for _, d := range rp.ds {
@@ -106,10 +96,10 @@ func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
 				y:     length / deltaTime,
 				label: fmt.Sprintf("%s: %dms over %d probes", rp.t, rts, len(rp.ds)),
 			}
-			points = append(points, segment(r))
+			points = append(points, segment.Section(r))
 		}
 	}
-	return &svgPointGraph{svgGraph: svgGraph{segments: points}}
+	return &svgPointGraph{SVG: graph.SVG{Segments: points, Height: 600.0, Width: 800.0}}
 }
 
 // Plots all points individually
@@ -118,9 +108,9 @@ func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
 // and the time difference between each frame. It then creates points for each probe, where the x-position
 // represents the time frame and y-position represents the response time, normalized by the time difference
 // between frames. A label is also generated for each point, displaying the recorded time and response period.
-func (x responseTimesPlotMaker) makeAllProbesPlot() renderer {
-	res := x.resolution.Milliseconds()
-	duration := x.end.Sub(x.start)
+func (x responseTimesPlotMaker) makeAllProbesPlot() graph.Renderer {
+	res := x.Resolution.Milliseconds()
+	duration := x.End.Sub(x.Start)
 	frames := float64(duration.Milliseconds()) / float64(res)
 
 	var maxTime int
@@ -136,9 +126,9 @@ func (x responseTimesPlotMaker) makeAllProbesPlot() renderer {
 	}
 	deltaTime := float64(maxTime-minTime) / float64(res)
 
-	points := make([]segment, 0, len(x.probes))
+	points := make([]segment.Section, 0, len(x.probes))
 	for _, probe := range x.probes {
-		posTime := probe.Recorded.AsTime().Sub(x.start)
+		posTime := probe.Recorded.AsTime().Sub(x.Start)
 		position := float64(posTime.Milliseconds()) / float64(res)
 
 		period := probe.ResponseTime.AsDuration()
@@ -149,82 +139,54 @@ func (x responseTimesPlotMaker) makeAllProbesPlot() renderer {
 			y:     length / deltaTime,
 			label: fmt.Sprintf("%s: %s", probe.Recorded.AsTime(), period),
 		}
-		points = append(points, segment(r))
+		points = append(points, segment.Section(r))
 	}
-	return &svgPointGraph{svgGraph: svgGraph{segments: points}}
+	return &svgPointGraph{SVG: graph.SVG{Segments: points, Height: 600.0, Width: 800.0}}
 }
 
 type incidentReportGraphMaker struct {
-	graphMeta
+	graph.Meta
 	reports []*model.IncidentReport
 }
 
-func (x incidentReportGraphMaker) Make() renderer {
-	duration := x.end.Sub(x.start)
-	timeframe := float64(duration.Milliseconds()) / float64(x.resolution.Milliseconds())
+func (x incidentReportGraphMaker) Make() graph.Renderer {
+	duration := x.End.Sub(x.Start)
+	timeframe := float64(duration.Milliseconds()) / float64(x.Resolution.Milliseconds())
 
-	blocks := make([]segment, 0, len(x.reports)+int(timeframe))
+	blocks := make([]segment.Section, 0, len(x.reports)+int(timeframe))
 	for i := 0; i < int(timeframe); i++ {
-		t := time.Duration(i) * x.resolution
+		t := time.Duration(i) * x.Resolution
 		r := block{
 			x:     float64(i) / timeframe,
 			w:     1.0 / timeframe,
-			label: fmt.Sprintf("%s: OK", x.start.Add(t)),
-			kind:  segmentOK,
+			label: fmt.Sprintf("%s: OK", x.Start.Add(t)),
+			kind:  segment.OK,
 		}
-		blocks = append(blocks, segment(r))
+		blocks = append(blocks, segment.Section(r))
 	}
 
 	for _, report := range x.reports {
-		posTime := report.Started.AsTime().Sub(x.start)
-		position := float64(posTime.Milliseconds()) / float64(x.resolution.Milliseconds())
+		posTime := report.Started.AsTime().Sub(x.Start)
+		position := float64(posTime.Milliseconds()) / float64(x.Resolution.Milliseconds())
 
 		period := report.Ended.AsTime().Sub(report.Started.AsTime())
-		length := float64(period.Milliseconds()) / float64(x.resolution.Milliseconds())
+		length := float64(period.Milliseconds()) / float64(x.Resolution.Milliseconds())
 
 		r := block{
 			x:     position / timeframe,
 			w:     length / timeframe,
 			label: fmt.Sprintf("%s: %s", report.Started.AsTime(), period),
-			kind:  segmentError,
+			kind:  segment.Error,
 		}
-		blocks = append(blocks, segment(r))
+		blocks = append(blocks, segment.Section(r))
 	}
-	return &svgBarGraph{svgGraph: svgGraph{segments: blocks}}
-}
-
-type segmentType uint8
-
-const (
-	segmentNormal segmentType = iota
-	segmentOK
-	segmentError
-)
-
-func (x segmentType) String() string {
-	switch x {
-	case segmentNormal:
-		return ""
-	case segmentOK:
-		return "ok"
-	case segmentError:
-		return "error"
-	default:
-		panic("unknown segment type")
-	}
-}
-
-type segment interface {
-	GetP1() float64
-	GetP2() float64
-	GetLabel() string
-	GetType() segmentType
+	return &svgBarGraph{SVG: graph.SVG{Segments: blocks, Height: 50.0, Width: 1000.0}}
 }
 
 type block struct {
 	x, w  float64
 	label string
-	kind  segmentType
+	kind  segment.Type
 }
 
 func (x block) GetP1() float64 {
@@ -239,7 +201,7 @@ func (x block) GetLabel() string {
 	return x.label
 }
 
-func (x block) GetType() segmentType {
+func (x block) GetType() segment.Type {
 	return x.kind
 }
 
@@ -260,78 +222,64 @@ func (x point) GetLabel() string {
 	return x.label
 }
 
-func (x point) GetType() segmentType {
-	return segmentNormal
-}
-
-type svgGraph struct {
-	segments []segment
+func (x point) GetType() segment.Type {
+	return segment.Normal
 }
 
 type svgBarGraph struct {
-	svgGraph
+	graph.SVG
 }
 
-func (x *svgBarGraph) Render() string {
+func (g *svgBarGraph) Render() string {
 	var b strings.Builder
-	style := Stylesheet{}
+	sheet := style.Sheet{}
 
-	width := 1000.0
-	height := 50.0
-	xmlns := "http://www.w3.org/2000/svg"
-
-	fmt.Fprintf(&b, `<svg version="1.1" width="%d" height="%d" xmlns="%s">`,
-		int64(width), int64(height*2), xmlns)
+	fmt.Fprintf(&b, g.GetHeader())
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
-		int64(width), int64(height), StylenameMain)
+		int64(g.Width), int64(g.Height), style.NameMain)
 
-	for _, r := range x.segments {
-		x := r.GetP1() * width
-		w := r.GetP2() * width
+	for _, r := range g.Segments {
+		x := r.GetP1() * g.Width
+		w := r.GetP2() * g.Width
 		if w < 1 {
 			w = 1
 		}
-		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
+		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
 		fmt.Fprintf(&b, `<rect x="%f" y="0" width="%f" height="%d" class="period"/>`,
-			x, w, int64(height))
+			x, w, int64(g.Height))
 		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">%s</text>`,
-			x, int64(height), r.GetLabel()) // TODO: escape/sanitize
+			x, int64(g.Height), r.GetLabel()) // TODO: escape/sanitize
 		fmt.Fprintf(&b, `</g>`)
 	}
-	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
+	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
 	fmt.Fprintf(&b, "</svg>")
 
 	return b.String()
 }
 
 type svgPointGraph struct {
-	svgGraph
+	graph.SVG
 }
 
-func (x *svgPointGraph) Render() string {
+func (g *svgPointGraph) Render() string {
 	var b strings.Builder
-	style := Stylesheet{}
+	sheet := style.Sheet{}
 
-	width := 800.0
-	height := 600.0
-	xmlns := "http://www.w3.org/2000/svg"
-
-	fmt.Fprintf(&b, `<svg version="1.1" width="%d" height="%d" xmlns="%s">`,
-		int64(width+20.0), int64(height+20.0), xmlns)
+	fmt.Fprintf(&b, g.GetHeader())
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
-		int64(width+20.0), int64(height+20.0), StylenameMain)
+		int64(g.Width), int64(g.Height), style.NameMain)
 
 	var prevX, prevY float64
 	var initX, initY float64
 	var path strings.Builder
-	for _, r := range x.segments {
-		x := r.GetP1() * width
-		if x > width {
-			x = width
+	for _, r := range g.Segments {
+		x := r.GetP1() * g.Width
+		if x > g.Width {
+			x = g.Width
 		}
-		y := height - (r.GetP2() * height)
-		if y > height {
-			y = height
+		y := g.Height - (r.GetP2() * g.Height)
+		if y > g.Height {
+			y = g.Height
 		}
 		if y < 0 {
 			y = 0
@@ -346,7 +294,7 @@ func (x *svgPointGraph) Render() string {
 			prevY = y
 		}
 
-		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
+		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
 		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
 			x, y)
 		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
@@ -364,41 +312,8 @@ func (x *svgPointGraph) Render() string {
 	}
 	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" />`,
 		initX, initY, path.String())
-	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
+	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
 	fmt.Fprintf(&b, "</svg>")
-
-	return b.String()
-}
-
-type Stylename uint16
-
-const (
-	StylenameMain Stylename = iota
-	StylenameSegment
-)
-
-func (x Stylename) String() string {
-	switch x {
-	case StylenameMain:
-		return "main"
-	case StylenameSegment:
-		return "segment"
-	default:
-		panic("unknown stylename")
-	}
-}
-
-type Stylesheet struct{}
-
-func (x Stylesheet) Render() string {
-	var b strings.Builder
-
-	fmt.Fprintf(&b, `.%s { fill: white }`, StylenameMain)
-	fmt.Fprintf(&b, `.%s.%s .period { fill: green; stroke: black; }`, StylenameSegment, segmentOK)
-	fmt.Fprintf(&b, `.%s.%s .period { fill: #cc0000 }`, StylenameSegment, segmentError)
-	fmt.Fprintf(&b, `.%s .label { transform: translate(0, 1em); display: none }`, StylenameSegment)
-	fmt.Fprintf(&b, `.%s.%s:hover .period { fill: #ff0000 }`, StylenameSegment, segmentError)
-	fmt.Fprintf(&b, `.%s:hover .label { display: block }`, StylenameSegment)
 
 	return b.String()
 }
