@@ -231,6 +231,7 @@ func (x *svgPointGraph) Render() string {
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
 		int64(width+20.0), int64(height+20.0), StylenameMain)
 
+	var prevX, prevY float64
 	for _, r := range x.segments {
 		x := r.GetP1() * width
 		if x > width {
@@ -246,10 +247,13 @@ func (x *svgPointGraph) Render() string {
 		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
 		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
 			x, y)
+		fmt.Fprintf(&b, `<line x1="%f" y1="%f" x2="%f" y2="%f" stroke="black"/>`,
+			prevX, prevY, x, y)
 		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
 			x, y, r.GetLabel()) // TODO: escape/sanitize
 		fmt.Fprintf(&b, `</g>`)
-		// TODO: plot connecting lines
+		prevX = x
+		prevY = y
 	}
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
 	fmt.Fprintf(&b, "</svg>")
