@@ -69,13 +69,22 @@ func dailyResponseTimesPlot(outfile string) {
 			},
 		},
 	}
-	// now := data.TimestampFromDatetime("2013-12-01 00:00:00").AsTime()
+	now := data.TimestampFromDatetime("2013-12-01 16:00:00").AsTime()
 	r, err := collections.GetProbesForWithin(query, 1312, 24*time.Hour)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(r)
+	maker := responseTimesPlotMaker{
+		graphMeta: graphMeta{
+			start:      now,
+			end:        now.Add(time.Hour),
+			resolution: time.Hour,
+		},
+		probes: r,
+	}
+	os.WriteFile(outfile, []byte(maker.Make().Render()), 0600)
+
 }
 
 func weeklyIncidentsGraph(outfile string) {
@@ -107,10 +116,12 @@ func weeklyIncidentsGraph(outfile string) {
 	}
 
 	maker := incidentReportGraphMaker{
-		start:      now.AddDate(0, 0, -3),
-		end:        now.AddDate(0, 0, 4),
-		resolution: time.Hour * 24,
-		reports:    r,
+		graphMeta: graphMeta{
+			start:      now.AddDate(0, 0, -3),
+			end:        now.AddDate(0, 0, 4),
+			resolution: time.Hour * 24,
+		},
+		reports: r,
 	}
 
 	os.WriteFile(outfile, []byte(maker.Make().Render()), 0600)

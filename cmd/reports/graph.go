@@ -3,6 +3,8 @@ package main
 import (
 	"availability/pkg/data/model"
 	"fmt"
+	"log"
+	"math"
 	"strings"
 	"time"
 )
@@ -15,11 +17,56 @@ type graphMaker interface {
 	Make() renderer
 }
 
-type incidentReportGraphMaker struct {
+type graphMeta struct {
 	start      time.Time
 	end        time.Time
 	resolution time.Duration
-	reports    []*model.IncidentReport
+}
+
+type responseTimesPlotMaker struct {
+	graphMeta
+	probes []*model.Probe
+}
+
+func (x responseTimesPlotMaker) Make() renderer {
+	duration := x.end.Sub(x.start)
+	frames := float64(duration.Milliseconds()) / float64(x.resolution.Milliseconds())
+
+	var maxTime int
+	var minTime int = math.MaxInt
+	for _, r := range x.probes {
+		dt := int(r.ResponseTime.AsDuration().Milliseconds())
+		if dt < minTime {
+			minTime = dt
+		}
+		if dt > maxTime {
+			maxTime = dt
+		}
+	}
+	deltaTime := float64(maxTime-minTime) / float64(x.resolution.Milliseconds())
+	log.Println("max", maxTime, "min", minTime, "delta", deltaTime)
+
+	points := make([]segment, 0, len(x.probes))
+	for _, probe := range x.probes {
+		posTime := probe.Recorded.AsTime().Sub(x.start)
+		position := float64(posTime.Milliseconds()) / float64(x.resolution.Milliseconds())
+
+		period := probe.ResponseTime.AsDuration()
+		length := float64(period.Milliseconds()) / float64(x.resolution.Milliseconds())
+
+		r := point{
+			x:     position / frames,
+			y:     length / deltaTime,
+			label: fmt.Sprintf("%s: %s", probe.Recorded.AsTime(), period),
+		}
+		points = append(points, segment(r))
+	}
+	return &svgPointGraph{svgGraph: svgGraph{segments: points}}
+}
+
+type incidentReportGraphMaker struct {
+	graphMeta
+	reports []*model.IncidentReport
 }
 
 func (x incidentReportGraphMaker) Make() renderer {
@@ -53,7 +100,7 @@ func (x incidentReportGraphMaker) Make() renderer {
 		}
 		blocks = append(blocks, segment(r))
 	}
-	return &svg{blocks: blocks}
+	return &svgBarGraph{svgGraph: svgGraph{segments: blocks}}
 }
 
 type segmentType uint8
@@ -106,11 +153,36 @@ func (x block) GetType() segmentType {
 	return x.kind
 }
 
-type svg struct {
-	blocks []segment
+type point struct {
+	x, y  float64
+	label string
 }
 
-func (x *svg) Render() string {
+func (x point) GetP1() float64 {
+	return x.x
+}
+
+func (x point) GetP2() float64 {
+	return x.y
+}
+
+func (x point) GetLabel() string {
+	return x.label
+}
+
+func (x point) GetType() segmentType {
+	return segmentNormal
+}
+
+type svgGraph struct {
+	segments []segment
+}
+
+type svgBarGraph struct {
+	svgGraph
+}
+
+func (x *svgBarGraph) Render() string {
 	var b strings.Builder
 	style := Stylesheet{}
 
@@ -123,7 +195,7 @@ func (x *svg) Render() string {
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
 		int64(width), int64(height), StylenameMain)
 
-	for _, r := range x.blocks {
+	for _, r := range x.segments {
 		x := r.GetP1() * width
 		w := r.GetP2() * width
 		if w < 1 {
@@ -135,6 +207,49 @@ func (x *svg) Render() string {
 		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">%s</text>`,
 			x, int64(height), r.GetLabel()) // TODO: escape/sanitize
 		fmt.Fprintf(&b, `</g>`)
+	}
+	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
+	fmt.Fprintf(&b, "</svg>")
+
+	return b.String()
+}
+
+type svgPointGraph struct {
+	svgGraph
+}
+
+func (x *svgPointGraph) Render() string {
+	var b strings.Builder
+	style := Stylesheet{}
+
+	width := 800.0
+	height := 600.0
+	xmlns := "http://www.w3.org/2000/svg"
+
+	fmt.Fprintf(&b, `<svg version="1.1" width="%d" height="%d" xmlns="%s">`,
+		int64(width+20.0), int64(height+20.0), xmlns)
+	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
+		int64(width+20.0), int64(height+20.0), StylenameMain)
+
+	for _, r := range x.segments {
+		x := r.GetP1() * width
+		if x > width {
+			x = width
+		}
+		y := height - (r.GetP2() * height)
+		if y > height {
+			y = height
+		}
+		if y < 0 {
+			y = 0
+		}
+		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
+		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
+			x, y)
+		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
+			x, y, r.GetLabel()) // TODO: escape/sanitize
+		fmt.Fprintf(&b, `</g>`)
+		// TODO: plot connecting lines
 	}
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
 	fmt.Fprintf(&b, "</svg>")
