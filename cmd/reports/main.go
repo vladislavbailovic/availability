@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"availability/cmd/reports/incidents"
+	"availability/cmd/reports/probes"
 	"availability/pkg/data"
 	"availability/pkg/data/collections"
 	"availability/pkg/data/fakes"
@@ -13,7 +15,8 @@ import (
 )
 
 func main() {
-	dailyResponseTimesPlot("tmp/test.svg")
+	dailyResponseTimesPlot("tmp/probes.svg")
+	weeklyIncidentsGraph("tmp/incidents.svg")
 }
 
 func dailyResponseTimesPlot(outfile string) {
@@ -76,13 +79,13 @@ func dailyResponseTimesPlot(outfile string) {
 		log.Fatal(err)
 	}
 
-	maker := responseTimesPlotMaker{
+	maker := probes.ResponseTimesPlot{
 		Meta: graph.Meta{
 			Start:      now,
 			End:        now.Add(time.Hour),
 			Resolution: time.Duration(4) * time.Minute,
 		},
-		probes: r,
+		Probes: r,
 	}
 	image := maker.Make().Render()
 	os.WriteFile(outfile, []byte(image), 0600)
@@ -117,13 +120,13 @@ func weeklyIncidentsGraph(outfile string) {
 		log.Fatal(err)
 	}
 
-	maker := incidentReportGraphMaker{
+	maker := incidents.ReportGraph{
 		Meta: graph.Meta{
 			Start:      now.AddDate(0, 0, -3),
 			End:        now.AddDate(0, 0, 4),
 			Resolution: time.Hour * 24,
 		},
-		reports: r,
+		Reports: r,
 	}
 
 	image := maker.Make().Render()
