@@ -3,7 +3,6 @@ package main
 import (
 	"availability/pkg/data/model"
 	"fmt"
-	"log"
 	"math"
 	"strings"
 	"time"
@@ -44,7 +43,6 @@ func (x responseTimesPlotMaker) Make() renderer {
 		}
 	}
 	deltaTime := float64(maxTime-minTime) / float64(x.resolution.Milliseconds())
-	log.Println("max", maxTime, "min", minTime, "delta", deltaTime)
 
 	points := make([]segment, 0, len(x.probes))
 	for _, probe := range x.probes {
@@ -232,6 +230,7 @@ func (x *svgPointGraph) Render() string {
 		int64(width+20.0), int64(height+20.0), StylenameMain)
 
 	var prevX, prevY float64
+	var path strings.Builder
 	for _, r := range x.segments {
 		x := r.GetP1() * width
 		if x > width {
@@ -247,14 +246,20 @@ func (x *svgPointGraph) Render() string {
 		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
 		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
 			x, y)
-		fmt.Fprintf(&b, `<line x1="%f" y1="%f" x2="%f" y2="%f" stroke="black"/>`,
-			prevX, prevY, x, y)
 		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
 			x, y, r.GetLabel()) // TODO: escape/sanitize
 		fmt.Fprintf(&b, `</g>`)
+
+		if math.Abs(x-prevX) > 5 && math.Abs(y-prevY) > 5 {
+			fmt.Fprintf(&path, "C %f,%f %f,%f %f,%f\n", x, prevY, prevX, y, x, y)
+		} else {
+			fmt.Fprintf(&path, "L %f,%f\n", x, y)
+		}
+
 		prevX = x
 		prevY = y
 	}
+	fmt.Fprintf(&b, `<path d="M 0,0 %s" fill="none" stroke="blue" />`, path.String())
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
 	fmt.Fprintf(&b, "</svg>")
 

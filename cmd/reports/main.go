@@ -79,7 +79,7 @@ func dailyResponseTimesPlot(outfile string) {
 		graphMeta: graphMeta{
 			start:      now,
 			end:        now.Add(time.Hour),
-			resolution: time.Hour,
+			resolution: time.Minute,
 		},
 		probes: r,
 	}
