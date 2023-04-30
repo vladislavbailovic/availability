@@ -34,8 +34,12 @@ type rawPoint struct {
 
 const curveDelta float64 = 10
 
+func (x responseTimesPlotMaker) Make() renderer {
+	return x.makeProbesWithinResolutionPlot()
+}
+
 // Plots resolution averages
-// Make generates a renderer for the response times plot
+// makeProbesWithinResolutionPlot generates a renderer for the response times plot
 //
 // This function generates a graph of the response time data, grouped by time interval specified in the resolution field of x.
 // It loops through the probes, and for each probe, checks if it falls in the time interval. If it does, it adds the response
@@ -44,7 +48,7 @@ const curveDelta float64 = 10
 // for that interval on the graph.
 //
 // Returns a renderer interface, which is used by the exporter to write the graph to the output file.
-func (x responseTimesPlotMaker) Make() renderer {
+func (x responseTimesPlotMaker) makeProbesWithinResolutionPlot() renderer {
 	res := x.resolution.Milliseconds()
 	frames := x.end.Sub(x.start).Milliseconds() / res
 	points := make([]segment, 0, frames)
@@ -109,7 +113,12 @@ func (x responseTimesPlotMaker) Make() renderer {
 }
 
 // Plots all points individually
-func (x responseTimesPlotMaker) MakeOld() renderer {
+// makeAllProbesPlot generates an SVG point graph for the response times of a set of probes over a given time range
+// using the specified resolution. It calculates the frames, maximum and minimum response times,
+// and the time difference between each frame. It then creates points for each probe, where the x-position
+// represents the time frame and y-position represents the response time, normalized by the time difference
+// between frames. A label is also generated for each point, displaying the recorded time and response period.
+func (x responseTimesPlotMaker) makeAllProbesPlot() renderer {
 	res := x.resolution.Milliseconds()
 	duration := x.end.Sub(x.start)
 	frames := float64(duration.Milliseconds()) / float64(res)
