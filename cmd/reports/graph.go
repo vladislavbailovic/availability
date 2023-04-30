@@ -27,9 +27,76 @@ type responseTimesPlotMaker struct {
 	probes []*model.Probe
 }
 
+type rawPoint struct {
+	t  time.Time
+	ds []int64
+}
+
+const curveDelta float64 = 10
+
+// Plots resolution averages
 func (x responseTimesPlotMaker) Make() renderer {
+	res := x.resolution.Milliseconds()
+	frames := x.end.Sub(x.start).Milliseconds() / res
+	points := make([]segment, 0, frames)
+
+	data := map[int64]*rawPoint{}
+
+	var maxTime int64
+	var minTime int64 = math.MaxInt64
+	// assert x.start > x.end - res
+	// assert res > probe interval
+	for i := x.start.UnixMilli(); i < x.end.UnixMilli()-res; i += res {
+		for _, p := range x.probes {
+			dt := p.ResponseTime.AsDuration().Milliseconds()
+			if dt < minTime {
+				minTime = dt
+			}
+			if dt > maxTime {
+				maxTime = dt
+			}
+			t := p.Recorded.AsTime()
+			if t.UnixMilli() > i && t.UnixMilli() <= i+res {
+				if pt, ok := data[i]; ok {
+					pt.ds = append(pt.ds, dt)
+				} else {
+					r := new(rawPoint)
+					r.t = t
+					r.ds = []int64{dt}
+					data[i] = r
+				}
+			}
+		}
+	}
+	deltaTime := float64(maxTime-minTime) / float64(res)
+
+	for i := x.start.UnixMilli(); i < x.end.UnixMilli()-res; i += res {
+		if rp, ok := data[i]; ok {
+			posTime := rp.t.Sub(x.start)
+			position := float64(posTime.Milliseconds()) / float64(res)
+
+			var sum int64
+			for _, d := range rp.ds {
+				sum += d
+			}
+			rts := sum / int64(len(rp.ds))
+			length := float64(rts) / float64(res)
+			r := point{
+				x:     position / float64(frames),
+				y:     length / deltaTime,
+				label: fmt.Sprintf("%s: %dms over %d probes", rp.t, rts, len(rp.ds)),
+			}
+			points = append(points, segment(r))
+		}
+	}
+	return &svgPointGraph{svgGraph: svgGraph{segments: points}}
+}
+
+// Plots all points individually
+func (x responseTimesPlotMaker) MakeOld() renderer {
+	res := x.resolution.Milliseconds()
 	duration := x.end.Sub(x.start)
-	frames := float64(duration.Milliseconds()) / float64(x.resolution.Milliseconds())
+	frames := float64(duration.Milliseconds()) / float64(res)
 
 	var maxTime int
 	var minTime int = math.MaxInt
@@ -42,15 +109,15 @@ func (x responseTimesPlotMaker) Make() renderer {
 			maxTime = dt
 		}
 	}
-	deltaTime := float64(maxTime-minTime) / float64(x.resolution.Milliseconds())
+	deltaTime := float64(maxTime-minTime) / float64(res)
 
 	points := make([]segment, 0, len(x.probes))
 	for _, probe := range x.probes {
 		posTime := probe.Recorded.AsTime().Sub(x.start)
-		position := float64(posTime.Milliseconds()) / float64(x.resolution.Milliseconds())
+		position := float64(posTime.Milliseconds()) / float64(res)
 
 		period := probe.ResponseTime.AsDuration()
-		length := float64(period.Milliseconds()) / float64(x.resolution.Milliseconds())
+		length := float64(period.Milliseconds()) / float64(res)
 
 		r := point{
 			x:     position / frames,
@@ -230,6 +297,7 @@ func (x *svgPointGraph) Render() string {
 		int64(width+20.0), int64(height+20.0), StylenameMain)
 
 	var prevX, prevY float64
+	var initX, initY float64
 	var path strings.Builder
 	for _, r := range x.segments {
 		x := r.GetP1() * width
@@ -243,6 +311,16 @@ func (x *svgPointGraph) Render() string {
 		if y < 0 {
 			y = 0
 		}
+
+		if initX == 0.0 {
+			initX = x
+			prevX = x
+		}
+		if initY == 0.0 {
+			initY = y
+			prevY = y
+		}
+
 		fmt.Fprintf(&b, `<g class="%s %s">`, StylenameSegment, r.GetType())
 		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
 			x, y)
@@ -250,7 +328,7 @@ func (x *svgPointGraph) Render() string {
 			x, y, r.GetLabel()) // TODO: escape/sanitize
 		fmt.Fprintf(&b, `</g>`)
 
-		if math.Abs(x-prevX) > 5 && math.Abs(y-prevY) > 5 {
+		if math.Abs(x-prevX) > curveDelta && math.Abs(y-prevY) > curveDelta {
 			fmt.Fprintf(&path, "C %f,%f %f,%f %f,%f\n", x, prevY, prevX, y, x, y)
 		} else {
 			fmt.Fprintf(&path, "L %f,%f\n", x, y)
@@ -259,7 +337,8 @@ func (x *svgPointGraph) Render() string {
 		prevX = x
 		prevY = y
 	}
-	fmt.Fprintf(&b, `<path d="M 0,0 %s" fill="none" stroke="blue" />`, path.String())
+	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" />`,
+		initX, initY, path.String())
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, style.Render())
 	fmt.Fprintf(&b, "</svg>")
 
