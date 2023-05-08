@@ -48,7 +48,7 @@ func (x ReportGraph) Make() graph.Renderer {
 		}
 		blocks = append(blocks, segment.Section(r))
 	}
-	return &svgBarGraph{SVG: graph.SVG{Segments: blocks, Height: 100.0, Width: 1000.0}}
+	return &svgBarGraph{SVG: graph.SVG{Segments: blocks, Height: 75.0, Width: 1000.0}}
 }
 
 type block struct {
@@ -93,9 +93,9 @@ func (g *svgBarGraph) Render() string {
 		}
 		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
 		fmt.Fprintf(&b, `<rect x="%f" y="0" width="%f" height="%d" class="period"/>`,
-			x, w, int64(g.Height/2.0))
-		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">`, x, int64(g.Height/2.0))
-		fmt.Fprintf(&b, `<tspan x="%f" y="%f" class="short">%d</tspan>`, x, (g.Height / 2.0), idx+1)
+			x, w, int64(g.Height))
+		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">`, x, int64(g.Height))
+		fmt.Fprintf(&b, `<tspan x="%f" y="%f" class="short">%d</tspan>`, x, (g.Height), idx+1)
 		fmt.Fprintf(&b, `<tspan x="0" y="%f" class="long">%s</tspan>`, g.Height, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprint(&b, `</text>`)
 		fmt.Fprint(&b, `</g>`)
