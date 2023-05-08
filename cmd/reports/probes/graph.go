@@ -27,6 +27,7 @@ type ResponseTimesPlot struct {
 
 func (x ResponseTimesPlot) Make() graph.Renderer {
 	return x.makeProbesWithinResolutionPlot()
+	// return x.makeAllProbesPlot()
 }
 
 // Plots resolution averages
@@ -220,7 +221,7 @@ func (g *svgPointGraph) Render() string {
 			x, y, radius, style.NamePeriod)
 		fmt.Fprintf(&pts, `<text x="%f" y="%f" class="label">`, x, y)
 		fmt.Fprintf(&pts, `<tspan dx="%f" dy="%f" class="short">%d</tspan>`, -dfr, dfr, idx+1)
-		fmt.Fprintf(&pts, `<tspan class="long">%s</tspan>`, template.HTMLEscapeString(r.GetLabel()))
+		fmt.Fprintf(&pts, `<tspan x="0" y="%f" class="long">%s</tspan>`, g.Height, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprint(&pts, `</text>`)
 		fmt.Fprint(&pts, `</g>`)
 

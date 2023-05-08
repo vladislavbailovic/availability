@@ -25,8 +25,11 @@ func (x Sheet) Render() string {
 
 	// If we can hover:
 	fmt.Fprint(&b, `@media (hover:hover) {`)
+
 	// Label toggle on hover
-	fmt.Fprintf(&b, `.%s:hover .label { transform: translate(0, 1.5em); }`, NameSegment)
+	fmt.Fprintf(&b, `svg { height: calc(100%% + 1em) !important }`)
+	fmt.Fprintf(&b, `.%s:hover .label { transform: translate(0, 1.2em); }`, NameSegment)
+
 	fmt.Fprintf(&b, `.%s:hover .label tspan.long { display: block }`, NameSegment)
 	fmt.Fprintf(&b, `.%s:hover .label tspan.short { display: none }`, NameSegment)
 	// Error fade-in on hover

@@ -96,7 +96,7 @@ func (g *svgBarGraph) Render() string {
 			x, w, int64(g.Height/2.0))
 		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">`, x, int64(g.Height/2.0))
 		fmt.Fprintf(&b, `<tspan x="%f" y="%f" class="short">%d</tspan>`, x, (g.Height / 2.0), idx+1)
-		fmt.Fprintf(&b, `<tspan class="long">%s</tspan>`, template.HTMLEscapeString(r.GetLabel()))
+		fmt.Fprintf(&b, `<tspan x="0" y="%f" class="long">%s</tspan>`, g.Height, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprint(&b, `</text>`)
 		fmt.Fprint(&b, `</g>`)
 	}
