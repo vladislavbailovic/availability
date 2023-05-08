@@ -189,7 +189,7 @@ func (g *svgPointGraph) Render() string {
 
 	var prevX, prevY float64
 	var initX, initY float64
-	var path strings.Builder
+	var path, pts strings.Builder
 	for _, r := range g.Segments {
 		x := r.GetP1() * g.Width
 		if x > g.Width {
@@ -212,12 +212,12 @@ func (g *svgPointGraph) Render() string {
 			prevY = y
 		}
 
-		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
-		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="%s"/>`,
+		fmt.Fprintf(&pts, `<g class="%s %s">`, style.NameSegment, r.GetType())
+		fmt.Fprintf(&pts, `<circle cx="%f" cy="%f" r="5" class="%s"/>`,
 			x, y, style.NamePeriod)
-		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
+		fmt.Fprintf(&pts, `<text x="%f" y="%f" class="label">%s</text>`,
 			x, y, template.HTMLEscapeString(r.GetLabel()))
-		fmt.Fprintf(&b, `</g>`)
+		fmt.Fprintf(&pts, `</g>`)
 
 		// TODO: improve curve smoothing
 		if math.Abs(x-prevX) > curveDelta && math.Abs(y-prevY) > curveDelta {
@@ -231,6 +231,7 @@ func (g *svgPointGraph) Render() string {
 	}
 	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" class="%s" />`,
 		initX, initY, path.String(), style.NameConnector)
+	fmt.Fprintf(&b, pts.String())
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
 	fmt.Fprintf(&b, "</svg>")
 
