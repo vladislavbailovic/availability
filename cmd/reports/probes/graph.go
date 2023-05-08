@@ -187,6 +187,9 @@ func (g *svgPointGraph) Render() string {
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
 		int64(g.Width), int64(g.Height), style.NameMain)
 
+	radius := 10
+	dfr := math.Pi + 1.0 // to center the short label; TODO: why though?
+
 	var prevX, prevY float64
 	var initX, initY float64
 	var path, pts strings.Builder
@@ -213,11 +216,11 @@ func (g *svgPointGraph) Render() string {
 		}
 
 		fmt.Fprintf(&pts, `<g class="%s %s">`, style.NameSegment, r.GetType())
-		fmt.Fprintf(&pts, `<circle cx="%f" cy="%f" r="5" class="%s"/>`,
-			x, y, style.NamePeriod)
+		fmt.Fprintf(&pts, `<circle cx="%f" cy="%f" r="%d" class="%s"/>`,
+			x, y, radius, style.NamePeriod)
 		fmt.Fprintf(&pts, `<text x="%f" y="%f" class="label">`, x, y)
-		fmt.Fprintf(&pts, `<tspan class="short">%d</tspan>`, idx+1)
-		fmt.Fprintf(&pts, `<tspan class="long">%s</tspan>`, template.HTMLEscapeString(r.GetLabel()))
+		fmt.Fprintf(&pts, `<tspan x="%f" y="%f" class="short">%d</tspan>`, x-dfr, y+dfr, idx+1)
+		fmt.Fprintf(&pts, `<tspan x="%f" y="%f" class="long">%s</tspan>`, x, y, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprint(&pts, `</text>`)
 		fmt.Fprint(&pts, `</g>`)
 
@@ -231,7 +234,7 @@ func (g *svgPointGraph) Render() string {
 		prevX = x
 		prevY = y
 	}
-	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" class="%s" />`,
+	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" class="%s" />`,
 		initX, initY, path.String(), style.NameConnector)
 	fmt.Fprintf(&b, pts.String())
 	b.WriteString(sheet.Render())

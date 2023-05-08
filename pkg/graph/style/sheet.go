@@ -18,13 +18,15 @@ func (x Sheet) Render() string {
 	fmt.Fprintf(&b, `.%s.%s .period { fill: green; stroke: #007700; }`, NameSegment, segment.OK)
 	fmt.Fprintf(&b, `.%s.%s .period { fill: #ff0000 }`, NameSegment, segment.Error)
 
-	fmt.Fprintf(&b, `.%s .label { transform: translate(0, 1em); }`, NameSegment)
 	fmt.Fprintf(&b, `.%s .label tspan { display: none }`, NameSegment)
-	fmt.Fprintf(&b, `.%s .label tspan.short { display: block; fill: #666 }`, NameSegment)
+	fmt.Fprintf(&b, `.%s .label tspan.short { display: block; font-size: 14px; fill: red }`, NameSegment)
+
+	fmt.Fprintf(&b, `.%s { stroke: blue; stroke-width: 6px }`, NameConnector)
 
 	// If we can hover:
 	fmt.Fprint(&b, `@media (hover:hover) {`)
 	// Label toggle on hover
+	fmt.Fprintf(&b, `.%s:hover .label { transform: translate(0, 1.5em); }`, NameSegment)
 	fmt.Fprintf(&b, `.%s:hover .label tspan.long { display: block }`, NameSegment)
 	fmt.Fprintf(&b, `.%s:hover .label tspan.short { display: none }`, NameSegment)
 	// Error fade-in on hover
