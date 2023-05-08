@@ -85,7 +85,7 @@ func (g *svgBarGraph) Render() string {
 	fmt.Fprintf(&b, `<rect x="0" y="0" width="%d" height="%d" class="%s" />`,
 		int64(g.Width), int64(g.Height), style.NameMain)
 
-	for _, r := range g.Segments {
+	for idx, r := range g.Segments {
 		x := r.GetP1() * g.Width
 		w := r.GetP2() * g.Width
 		if w < 1 {
@@ -94,11 +94,13 @@ func (g *svgBarGraph) Render() string {
 		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
 		fmt.Fprintf(&b, `<rect x="%f" y="0" width="%f" height="%d" class="period"/>`,
 			x, w, int64(g.Height/2.0))
-		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">%s</text>`,
-			x, int64(g.Height/2.0), template.HTMLEscapeString(r.GetLabel()))
-		fmt.Fprintf(&b, `</g>`)
+		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">`, x, int64(g.Height/2.0))
+		fmt.Fprintf(&b, `<tspan class="short">%d</tspan>`, idx+1)
+		fmt.Fprintf(&b, `<tspan class="long">%s</tspan>`, template.HTMLEscapeString(r.GetLabel()))
+		fmt.Fprint(&b, `</text>`)
+		fmt.Fprint(&b, `</g>`)
 	}
-	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
+	b.WriteString(sheet.Render())
 	fmt.Fprintf(&b, "</svg>")
 
 	return b.String()
