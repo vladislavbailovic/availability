@@ -3,6 +3,7 @@ package incidents
 import (
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
 
 	"availability/pkg/data/model"
@@ -94,7 +95,7 @@ func (g *svgBarGraph) Render() string {
 		fmt.Fprintf(&b, `<rect x="%f" y="0" width="%f" height="%d" class="period"/>`,
 			x, w, int64(g.Height/2.0))
 		fmt.Fprintf(&b, `<text x="%f" y="%d" class="label">%s</text>`,
-			x, int64(g.Height/2.0), r.GetLabel()) // TODO: escape/sanitize
+			x, int64(g.Height/2.0), template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprintf(&b, `</g>`)
 	}
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
