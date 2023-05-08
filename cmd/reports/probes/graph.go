@@ -213,8 +213,8 @@ func (g *svgPointGraph) Render() string {
 		}
 
 		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
-		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="period"/>`,
-			x, y)
+		fmt.Fprintf(&b, `<circle cx="%f" cy="%f" r="5" class="%s"/>`,
+			x, y, style.NamePeriod)
 		fmt.Fprintf(&b, `<text x="%f" y="%f" class="label">%s</text>`,
 			x, y, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprintf(&b, `</g>`)
@@ -229,8 +229,8 @@ func (g *svgPointGraph) Render() string {
 		prevX = x
 		prevY = y
 	}
-	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" />`,
-		initX, initY, path.String())
+	fmt.Fprintf(&b, `<path d="M %f,%f %s" fill="none" stroke="blue" class="%s" />`,
+		initX, initY, path.String(), style.NameConnector)
 	fmt.Fprintf(&b, `<style type="text/css">%s</style>`, sheet.Render())
 	fmt.Fprintf(&b, "</svg>")
 
