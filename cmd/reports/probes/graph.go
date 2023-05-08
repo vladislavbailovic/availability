@@ -219,7 +219,7 @@ func (g *svgPointGraph) Render() string {
 		fmt.Fprintf(&pts, `<circle cx="%f" cy="%f" r="%d" class="%s"/>`,
 			x, y, radius, style.NamePeriod)
 		fmt.Fprintf(&pts, `<text x="%f" y="%f" class="label">`, x, y)
-		fmt.Fprintf(&pts, `<tspan x="%f" y="%f" class="short">%d</tspan>`, x-dfr, y+dfr, idx+1)
+		fmt.Fprintf(&pts, `<tspan dx="%f" dy="%f" class="short">%d</tspan>`, -dfr, dfr, idx+1)
 		fmt.Fprintf(&pts, `<tspan class="long">%s</tspan>`, template.HTMLEscapeString(r.GetLabel()))
 		fmt.Fprint(&pts, `</text>`)
 		fmt.Fprint(&pts, `</g>`)
