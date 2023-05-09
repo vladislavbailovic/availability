@@ -15,6 +15,10 @@ func NewTimeoutProbe(siteID int) *Probe {
 	return p
 }
 
+func (x *Probe) IsValid() bool {
+	return x.SiteID > 0
+}
+
 func (x *Probe) IsDown() bool {
 	switch x.Err {
 	case HttpErr_HTTPERR_NONE, HttpErr_HTTPERR_OK:

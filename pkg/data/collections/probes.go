@@ -67,6 +67,9 @@ func GetProbesForWithin(query data.Collector, siteID int, since time.Duration) (
 				&responseTime,
 				&r.Err,
 				&r.Msg)
+			if !r.IsValid() {
+				continue
+			}
 			if err != nil {
 				log.Printf("WARNING: scan error: %v", err)
 				continue

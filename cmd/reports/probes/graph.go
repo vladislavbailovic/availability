@@ -59,7 +59,7 @@ func (x ResponseTimesPlot) makeProbesWithinResolutionPlot() graph.Renderer {
 
 	// assert x.start > x.end - res
 	// assert res > probe interval
-	for i := x.Start.UnixMilli(); i < x.End.UnixMilli()-res; i += res {
+	for i := x.Start.UnixMilli(); i < x.End.UnixMilli()+res; i += res {
 		for _, p := range x.Probes {
 			dt := p.ResponseTime.AsDuration().Milliseconds()
 			if dt < minTime {
@@ -77,7 +77,7 @@ func (x ResponseTimesPlot) makeProbesWithinResolutionPlot() graph.Renderer {
 					pt.ds = append(pt.ds, dt)
 				} else {
 					r := new(rawPoint)
-					r.t = t
+					r.t = t.Truncate(x.Resolution)
 					r.ds = []int64{dt}
 					data[i] = r
 				}
@@ -101,7 +101,7 @@ func (x ResponseTimesPlot) makeProbesWithinResolutionPlot() graph.Renderer {
 			length := float64(rts) / float64(res)
 			r := point{
 				x:     position / float64(frames),
-				y:     length / deltaTime,
+				y:     deltaTime / length,
 				label: fmt.Sprintf("%s: %dms over %d probes", rp.t, rts, len(rp.ds)),
 			}
 			points = append(points, segment.Section(r))
@@ -147,7 +147,7 @@ func (x ResponseTimesPlot) makeAllProbesPlot() graph.Renderer {
 
 		r := point{
 			x:     position / frames,
-			y:     length / deltaTime,
+			y:     deltaTime / length,
 			label: fmt.Sprintf("%s: %s", probe.Recorded.AsTime(), period),
 		}
 		points = append(points, segment.Section(r))
@@ -199,7 +199,7 @@ func (g *svgPointGraph) Render() string {
 		if x > g.Width {
 			x = g.Width
 		}
-		y := g.Height - (r.GetP2() * g.Height)
+		y := r.GetP2() * g.Height
 		if y > g.Height {
 			y = g.Height
 		}

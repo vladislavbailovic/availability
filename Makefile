@@ -24,3 +24,12 @@ run-docker-controller: job-image docker-controller-image
 		--link avbl-data \
 		--name avbl-controller \
 		availability:docker-controller
+
+reports:
+	docker build . -f docker/availiability-service \
+		-t availability:reports --target reports
+	docker run --rm \
+		-v ./tmp:/tmp \
+		--link avbl-data \
+		--name avbl-reports \
+		availability:reports

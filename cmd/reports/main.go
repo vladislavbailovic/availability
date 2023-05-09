@@ -11,6 +11,7 @@ import (
 	"availability/pkg/data/collections"
 	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
+	"availability/pkg/data/sql"
 	"availability/pkg/graph"
 )
 
@@ -20,7 +21,69 @@ func main() {
 }
 
 func dailyResponseTimesPlot(outfile string) {
-	query := &fakes.ProbeCollector{
+	query := new(sql.ProbeCollector)
+	now := time.Now().Truncate(time.Hour)
+	r, err := collections.GetProbesForWithin(query, 161, 24*time.Hour)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	maker := probes.ResponseTimesPlot{
+		Meta: graph.Meta{
+			Start:      now.Add(-1 * time.Hour),
+			End:        now,
+			Resolution: time.Duration(4) * time.Minute,
+		},
+		Probes: r,
+	}
+	image := maker.Make().Render()
+	os.WriteFile(outfile, []byte(image), 0666)
+
+}
+
+func weeklyIncidentsGraph(outfile string) {
+	query := &fakes.IncidentReportCollector{
+		Reports: []fakes.Report{
+			fakes.Report{
+				ID:      1312,
+				URL:     "wat",
+				Started: "2013-12-01 16:10:00",
+				Err:     model.HttpErr_HTTPERR_NOT_FOUND,
+				Msg:     "GTFO",
+				Ended:   "2013-12-01 16:11:10",
+			},
+			fakes.Report{
+				ID:      1312,
+				URL:     "wat",
+				Started: "2013-12-02 16:10:00",
+				Err:     model.HttpErr_HTTPERR_NOT_FOUND,
+				Msg:     "GTFO",
+				Ended:   "2013-12-03 16:10:00",
+			},
+		},
+	}
+	weekAgo := time.Duration(7*24) * time.Hour
+	now := data.TimestampFromDatetime("2013-12-01 00:00:00").AsTime()
+	r, err := collections.GetIncidentReportsFor(query, 1312, weekAgo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	maker := incidents.ReportGraph{
+		Meta: graph.Meta{
+			Start:      now.AddDate(0, 0, -3),
+			End:        now.AddDate(0, 0, 4),
+			Resolution: time.Hour * 24,
+		},
+		Reports: r,
+	}
+
+	image := maker.Make().Render()
+	os.WriteFile(outfile, []byte(image), 0666)
+}
+
+func getFakeProbes() data.Collector {
+	return &fakes.ProbeCollector{
 		Probes: []fakes.Probe{
 			fakes.Probe{
 				SiteID:       1312,
@@ -73,62 +136,4 @@ func dailyResponseTimesPlot(outfile string) {
 			},
 		},
 	}
-	now := data.TimestampFromDatetime("2013-12-01 16:00:00").AsTime()
-	r, err := collections.GetProbesForWithin(query, 1312, 24*time.Hour)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	maker := probes.ResponseTimesPlot{
-		Meta: graph.Meta{
-			Start:      now,
-			End:        now.Add(time.Hour),
-			Resolution: time.Duration(4) * time.Minute,
-		},
-		Probes: r,
-	}
-	image := maker.Make().Render()
-	os.WriteFile(outfile, []byte(image), 0600)
-
-}
-
-func weeklyIncidentsGraph(outfile string) {
-	query := &fakes.IncidentReportCollector{
-		Reports: []fakes.Report{
-			fakes.Report{
-				ID:      1312,
-				URL:     "wat",
-				Started: "2013-12-01 16:10:00",
-				Err:     model.HttpErr_HTTPERR_NOT_FOUND,
-				Msg:     "GTFO",
-				Ended:   "2013-12-01 16:11:10",
-			},
-			fakes.Report{
-				ID:      1312,
-				URL:     "wat",
-				Started: "2013-12-02 16:10:00",
-				Err:     model.HttpErr_HTTPERR_NOT_FOUND,
-				Msg:     "GTFO",
-				Ended:   "2013-12-03 16:10:00",
-			},
-		},
-	}
-	weekAgo := time.Duration(7*24) * time.Hour
-	now := data.TimestampFromDatetime("2013-12-01 00:00:00").AsTime()
-	r, err := collections.GetIncidentReportsFor(query, 1312, weekAgo)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	maker := incidents.ReportGraph{
-		Meta: graph.Meta{
-			Start:      now.AddDate(0, 0, -3),
-			End:        now.AddDate(0, 0, 4),
-			Resolution: time.Hour * 24,
-		},
-		Reports: r,
-	}
-
-	image := maker.Make().Render()
-	os.WriteFile(outfile, []byte(image), 0600)
 }

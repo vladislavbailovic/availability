@@ -22,3 +22,7 @@ ENTRYPOINT ["/job"]
 FROM alpine:latest as docker-controller
 COPY --from=build /app/docker-controller /docker-controller
 ENTRYPOINT ["/docker-controller"]
+
+FROM alpine:latest as reports
+COPY --from=build /app/reports /reports
+ENTRYPOINT ["/reports"]

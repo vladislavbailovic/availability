@@ -53,6 +53,16 @@ func IntArgAt(args []any, pos int) int {
 	return x
 }
 
+func DurationArgAt(args []any, pos int) time.Duration {
+	var x time.Duration
+	if len(args) >= pos {
+		if y, ok := args[pos].(time.Duration); ok {
+			x = y
+		}
+	}
+	return x
+}
+
 const (
 	SourceDatetimeFormat string = "2006-01-02 15:04:05"
 )

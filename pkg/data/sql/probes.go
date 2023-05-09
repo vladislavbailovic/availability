@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 
 	_ "embed"
@@ -12,15 +13,18 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-//go:embed queries/insert_probes.sql
-var insertProbesQueryPartial string
+var (
+	//go:embed queries/insert_probes.sql
+	insertProbesQueryPartial string
+	//go:embed queries/probes_for_within.sql
+	probesForWithinQuery string
+)
 
-type ProbeInserter struct {
-	conn   *sql.DB
-	Probes []*model.Probe
+type probeConnector struct {
+	conn *sql.DB
 }
 
-func (x *ProbeInserter) Connect() error {
+func (x *probeConnector) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
@@ -32,11 +36,16 @@ func (x *ProbeInserter) Connect() error {
 	return nil
 }
 
-func (x *ProbeInserter) Disconnect() {
+func (x *probeConnector) Disconnect() {
 	if x.conn == nil {
 		return
 	}
 	x.conn.Close()
+}
+
+type ProbeInserter struct {
+	probeConnector
+	Probes []*model.Probe
 }
 
 func (x *ProbeInserter) Insert(items ...any) (data.DataID, error) {
@@ -72,4 +81,55 @@ func (x *ProbeInserter) Insert(items ...any) (data.DataID, error) {
 	}
 	id, err := res.LastInsertId()
 	return data.DataID(id), err
+}
+
+type ProbeCollector struct {
+	probeConnector
+}
+
+func (x *ProbeCollector) Query(args ...any) (*data.Scanners, error) {
+	limit := 100
+	siteID := data.IntArgAt(args, 0)
+	if siteID == 0 {
+		return nil, errors.New("expected siteID")
+	}
+
+	since := data.DurationArgAt(args, 1)
+	if since == 0 {
+		return nil, errors.New("expected period duration")
+	}
+
+	if err := x.Connect(); err != nil {
+		return nil, err
+	}
+
+	stmt, err := x.conn.Prepare(probesForWithinQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	results, err := stmt.Query(siteID, since.Seconds(), limit)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]data.Scanner, 0, limit)
+	for i := 0; i < limit; i++ {
+		res = append(res, data.Scanner(probeScanner{r: results}))
+	}
+
+	scanners := data.Scanners(res)
+	return &scanners, nil
+}
+
+type probeScanner struct {
+	r *sql.Rows
+}
+
+func (x probeScanner) Scan(dest ...any) error {
+	if x.r.Next() {
+		return x.r.Scan(dest...)
+	}
+	return nil
 }
