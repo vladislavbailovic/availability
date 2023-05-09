@@ -35,14 +35,14 @@ func (x ReportGraph) Make() graph.Renderer {
 
 	for _, report := range x.Reports {
 		posTime := report.Started.AsTime().Sub(x.Start)
-		position := float64(posTime.Milliseconds()) / float64(x.Resolution.Milliseconds())
+		position := float64(posTime.Milliseconds()) / float64(duration.Milliseconds())
 
 		period := report.Ended.AsTime().Sub(report.Started.AsTime())
-		length := float64(period.Milliseconds()) / float64(x.Resolution.Milliseconds())
+		length := float64(period.Milliseconds()) / float64(duration.Milliseconds())
 
 		r := block{
-			x:     position / timeframe,
-			w:     length / timeframe,
+			x:     position,
+			w:     length,
 			label: fmt.Sprintf("%s: %s", report.Started.AsTime(), period),
 			kind:  segment.Error,
 		}
@@ -87,9 +87,15 @@ func (g *svgBarGraph) Render() string {
 
 	for idx, r := range g.Segments {
 		x := r.GetP1() * g.Width
+		if x < 0 {
+			x = 0
+		}
 		w := r.GetP2() * g.Width
 		if w < 1 {
 			w = 1
+		}
+		if w > g.Width {
+			w = g.Width
 		}
 		fmt.Fprintf(&b, `<g class="%s %s">`, style.NameSegment, r.GetType())
 		fmt.Fprintf(&b, `<rect x="%f" y="0" width="%f" height="%d" class="period"/>`,

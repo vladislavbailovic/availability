@@ -76,6 +76,9 @@ func GetIncidentReportsFor(query data.Collector, siteID int, since time.Duration
 				&r.Err,
 				&r.Msg,
 				&ended)
+			if !r.IsValid() {
+				continue
+			}
 			if err != nil {
 				log.Printf("WARNING: scan error: %v", err)
 				continue

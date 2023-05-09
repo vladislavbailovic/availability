@@ -10,3 +10,7 @@ func NewIncident(siteID, downProbeId int) *Incident {
 func (x *Incident) Close(upProbeID int) {
 	x.UpProbeID = int32(upProbeID)
 }
+
+func (x *IncidentReport) IsValid() bool {
+	return x.SiteID > 0
+}

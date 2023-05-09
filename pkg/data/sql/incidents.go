@@ -20,13 +20,15 @@ var (
 	updateIncidentQuery string
 	//go:embed queries/insert_incident.sql
 	insertIncidentQuery string
+	//go:embed queries/incident_reports_for_within.sql
+	incidentReportsForWithinQuery string
 )
 
-type IncidentSelection struct {
+type incidentConnector struct {
 	conn *sql.DB
 }
 
-func (x *IncidentSelection) Connect() error {
+func (x *incidentConnector) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
@@ -38,11 +40,15 @@ func (x *IncidentSelection) Connect() error {
 	return nil
 }
 
-func (x *IncidentSelection) Disconnect() {
+func (x *incidentConnector) Disconnect() {
 	if x.conn == nil {
 		return
 	}
 	x.conn.Close()
+}
+
+type IncidentSelection struct {
+	incidentConnector
 }
 
 func (x *IncidentSelection) Query(args ...any) (data.Scanner, error) {
@@ -66,26 +72,7 @@ func (x *IncidentSelection) Query(args ...any) (data.Scanner, error) {
 }
 
 type IncidentUpdater struct {
-	conn *sql.DB
-}
-
-func (x *IncidentUpdater) Connect() error {
-	if x.conn != nil {
-		return nil
-	}
-	db, err := sql.Open("mysql", "root:root@tcp(avbl-data:3306)/narfs")
-	if err != nil {
-		return err
-	}
-	x.conn = db
-	return nil
-}
-
-func (x *IncidentUpdater) Disconnect() {
-	if x.conn == nil {
-		return
-	}
-	x.conn.Close()
+	incidentConnector
 }
 
 func (x *IncidentUpdater) Update(v any) error {
@@ -109,26 +96,7 @@ func (x *IncidentUpdater) Update(v any) error {
 }
 
 type IncidentInserter struct {
-	conn *sql.DB
-}
-
-func (x *IncidentInserter) Connect() error {
-	if x.conn != nil {
-		return nil
-	}
-	db, err := sql.Open("mysql", "root:root@tcp(avbl-data:3306)/narfs")
-	if err != nil {
-		return err
-	}
-	x.conn = db
-	return nil
-}
-
-func (x *IncidentInserter) Disconnect() {
-	if x.conn == nil {
-		return
-	}
-	x.conn.Close()
+	incidentConnector
 }
 
 func (x *IncidentInserter) Insert(v any) (data.DataID, error) {
@@ -167,6 +135,57 @@ func (x incidentSelectionScanner) Scan(dest ...any) error {
 			return nil
 		}
 		return err
+	}
+	return nil
+}
+
+type IncidentReportCollector struct {
+	incidentConnector
+}
+
+func (x *IncidentReportCollector) Query(args ...any) (*data.Scanners, error) {
+	limit := 100
+	siteID := data.IntArgAt(args, 0)
+	if siteID == 0 {
+		return nil, errors.New("expected siteID")
+	}
+
+	since := data.DurationArgAt(args, 1)
+	if since == 0 {
+		return nil, errors.New("expected period duration")
+	}
+
+	if err := x.Connect(); err != nil {
+		return nil, err
+	}
+
+	stmt, err := x.conn.Prepare(incidentReportsForWithinQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	results, err := stmt.Query(siteID, since.Seconds(), limit)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]data.Scanner, 0, limit)
+	for i := 0; i < limit; i++ {
+		res = append(res, data.Scanner(incidentReportScanner{r: results}))
+	}
+
+	scanners := data.Scanners(res)
+	return &scanners, nil
+}
+
+type incidentReportScanner struct {
+	r *sql.Rows
+}
+
+func (x incidentReportScanner) Scan(dest ...any) error {
+	if x.r.Next() {
+		return x.r.Scan(dest...)
 	}
 	return nil
 }
