@@ -7,6 +7,8 @@ const (
 	SiteURL
 	PreviouslyDown
 
+	DBConnURI
+
 	TotalNamesCount
 )
 
@@ -18,6 +20,10 @@ func (x Name) String() string {
 		return "AVBL_SITE_URL"
 	case PreviouslyDown:
 		return "AVBL_PREVIOUSLY_DOWN"
+
+	case DBConnURI:
+		return "AVBL_DBCONN_URI"
+
 	default:
 		panic("unknown env var")
 	}

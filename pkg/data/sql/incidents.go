@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"os"
 
 	"availability/pkg/data"
 	"availability/pkg/data/model"
+	"availability/pkg/env"
 
 	_ "embed"
 
@@ -32,7 +34,7 @@ func (x *incidentConnector) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
-	db, err := sql.Open("mysql", "root:root@tcp(avbl-data:3306)/narfs")
+	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
 	if err != nil {
 		return err
 	}

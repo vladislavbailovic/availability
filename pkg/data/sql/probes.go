@@ -3,12 +3,14 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"os"
 	"strings"
 
 	_ "embed"
 
 	"availability/pkg/data"
 	"availability/pkg/data/model"
+	"availability/pkg/env"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,7 +30,7 @@ func (x *probeConnector) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
-	db, err := sql.Open("mysql", "root:root@tcp(avbl-data:3306)/narfs")
+	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
 	if err != nil {
 		return err
 	}

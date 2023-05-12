@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"availability/pkg/data/model"
@@ -28,8 +29,13 @@ func getJobEnv(task *model.Task) []string {
 		down = task.Previous.ProbeID
 	}
 	return []string{
+
+		// Task-specific
 		fmt.Sprintf("%s=%d", env.SiteID.String(), task.Source.SiteID),
 		fmt.Sprintf("%s=%s", env.SiteURL.String(), task.Source.URL),
 		fmt.Sprintf("%s=%d", env.PreviouslyDown.String(), down),
+
+		// Inherit
+		fmt.Sprintf("%s=%s", env.DBConnURI.String(), os.Getenv(env.DBConnURI.String())),
 	}
 }

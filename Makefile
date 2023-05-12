@@ -22,6 +22,7 @@ run-docker-controller: job-image docker-controller-image
 	docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
 		--name avbl-controller \
 		availability:docker-controller
 
@@ -31,5 +32,6 @@ reports:
 	docker run --rm \
 		-v ./tmp:/tmp \
 		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
 		--name avbl-reports \
 		availability:reports
