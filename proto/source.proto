@@ -13,3 +13,8 @@ message Source {
 	bool                      Active  = 5;
 }
 
+
+message NewSource {
+	int32  SiteID   = 1 [json_name="site_id"];
+	string URL      = 2 [json_name="url"];
+}

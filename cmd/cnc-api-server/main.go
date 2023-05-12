@@ -7,7 +7,10 @@ import (
 	"strings"
 
 	"availability/pkg/data/collections"
+	"availability/pkg/data/model"
 	"availability/pkg/data/sql"
+
+	"github.com/gogo/protobuf/jsonpb"
 )
 
 func main() {
@@ -17,8 +20,10 @@ func main() {
 }
 
 func registerHandlers() {
+	// TODO: auth
 	http.HandleFunc("/activate/", activate)
 	http.HandleFunc("/deactivate/", deactivate)
+	http.HandleFunc("/add/", addNew)
 }
 
 func activate(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +83,49 @@ func deactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sendAllGood(w)
+}
+
+func addNew(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		log.Printf("unsupported request type: %v", r.Method)
+		sendServerError(w)
+		return
+	}
+
+	defer r.Body.Close()
+	src := new(model.NewSource)
+	if err := jsonpb.Unmarshal(r.Body, src); err != nil {
+		log.Print(err)
+		sendServerError(w)
+		return
+	}
+
+	if !src.IsValid() {
+		log.Printf("invalid source: %v", src)
+		sendServerError(w)
+		return
+	}
+
+	// TODO: validate site URL
+	panic("invalid site URL")
+
+	query := new(sql.SourceInserter)
+	if err := query.Connect(); err != nil {
+		log.Println(err)
+		sendServerError(w)
+		return
+	}
+	defer query.Disconnect()
+
+	id, err := query.Insert(src)
+	if err != nil {
+		log.Println(err)
+		sendServerError(w)
+		return
+	}
+
+	log.Printf("insert new source: %v, ID: %d", src, id)
 	sendAllGood(w)
 }
 

@@ -3,6 +3,7 @@ package sql
 import (
 	"errors"
 
+	"availability/pkg/data"
 	"availability/pkg/data/model"
 
 	_ "embed"
@@ -11,6 +12,9 @@ import (
 var (
 	//go:embed queries/update_source_query.sql
 	updateSourceQuery string
+
+	//go:embed queries/insert_source_query.sql
+	insertSourceQuery string
 )
 
 type SourceActivator struct {
@@ -51,4 +55,28 @@ func (x *SourceDeactivator) Update(v any) error {
 
 	_, err = stmt.Exec(model.SourceInactive, siteID)
 	return err
+}
+
+type SourceInserter struct {
+	sqlConnector
+}
+
+func (x *SourceInserter) Insert(v any) (data.DataID, error) {
+	site, ok := v.(*model.NewSource)
+	if !ok {
+		return 0, errors.New("expected new source")
+	}
+
+	stmt, err := x.conn.Prepare(insertSourceQuery)
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(site.SiteID, site.URL)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	return data.DataID(id), err
 }
