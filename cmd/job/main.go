@@ -12,6 +12,7 @@ import (
 	"availability/pkg/data/collections"
 	"availability/pkg/data/model"
 	"availability/pkg/data/sql"
+	"availability/pkg/env"
 )
 
 const (
@@ -23,9 +24,9 @@ const (
 var activeIncident *model.Incident
 
 func main() {
-	rawSiteID := os.Getenv("AVBL_SITE_ID")
-	rawSiteURL := os.Getenv("AVBL_SITE_URL")
-	rawIsDown := os.Getenv("AVBL_PREVIOUSLY_DOWN")
+	rawSiteID := os.Getenv(env.SiteID.String())
+	rawSiteURL := os.Getenv(env.SiteURL.String())
+	rawIsDown := os.Getenv(env.PreviouslyDown.String())
 
 	var siteID int
 	if x, err := strconv.Atoi(rawSiteID); err != nil {

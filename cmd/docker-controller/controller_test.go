@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"availability/pkg/data/model"
+	"availability/pkg/env"
 )
 
 func Test_getJobName(t *testing.T) {
@@ -35,18 +36,18 @@ func Test_getJobEnv(t *testing.T) {
 	}
 	e := getJobEnv(task)
 
-	if len(e) != int(_envNamesCount) {
-		t.Errorf("unexpected env size: %d (wanted %d)", len(e), _envNamesCount)
+	if len(e) != int(env.TotalNamesCount) {
+		t.Errorf("unexpected env size: %d (wanted %d)", len(e), env.TotalNamesCount)
 	}
 
-	if !strings.Contains(e[0], envSiteID.String()) {
+	if !strings.Contains(e[0], env.SiteID.String()) {
 		t.Errorf("missing site ID env var: %v", e[0])
 	}
 	if !strings.Contains(e[0], "161") {
 		t.Errorf("invalid site ID env var: %v", e[0])
 	}
 
-	if !strings.Contains(e[1], envSiteURL.String()) {
+	if !strings.Contains(e[1], env.SiteURL.String()) {
 		t.Errorf("missing site URL env var: %v", e[1])
 	}
 	if !strings.Contains(e[1], "http://puppychowfoo.rocks") {

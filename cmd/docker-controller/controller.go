@@ -6,30 +6,8 @@ import (
 	"strings"
 
 	"availability/pkg/data/model"
+	"availability/pkg/env"
 )
-
-type envName uint
-
-const (
-	envSiteID envName = iota
-	envSiteURL
-	envPreviouslyDown
-
-	_envNamesCount
-)
-
-func (x envName) String() string {
-	switch x {
-	case envSiteID:
-		return "AVBL_SITE_ID"
-	case envSiteURL:
-		return "AVBL_SITE_URL"
-	case envPreviouslyDown:
-		return "AVBL_PREVIOUSLY_DOWN"
-	default:
-		panic("unknown env var")
-	}
-}
 
 func getJobName(siteID int32, siteURL string) string {
 	var b strings.Builder
@@ -50,8 +28,8 @@ func getJobEnv(task *model.Task) []string {
 		down = task.Previous.ProbeID
 	}
 	return []string{
-		fmt.Sprintf("%s=%d", envSiteID.String(), task.Source.SiteID),
-		fmt.Sprintf("%s=%s", envSiteURL.String(), task.Source.URL),
-		fmt.Sprintf("%s=%d", envPreviouslyDown.String(), down),
+		fmt.Sprintf("%s=%d", env.SiteID.String(), task.Source.SiteID),
+		fmt.Sprintf("%s=%s", env.SiteURL.String(), task.Source.URL),
+		fmt.Sprintf("%s=%d", env.PreviouslyDown.String(), down),
 	}
 }
