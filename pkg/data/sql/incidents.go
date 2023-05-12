@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"os"
 
 	"availability/pkg/data"
 	"availability/pkg/data/model"
-	"availability/pkg/env"
 
 	_ "embed"
 
@@ -26,31 +24,8 @@ var (
 	incidentReportsForWithinQuery string
 )
 
-type incidentConnector struct {
-	conn *sql.DB
-}
-
-func (x *incidentConnector) Connect() error {
-	if x.conn != nil {
-		return nil
-	}
-	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
-	if err != nil {
-		return err
-	}
-	x.conn = db
-	return nil
-}
-
-func (x *incidentConnector) Disconnect() {
-	if x.conn == nil {
-		return
-	}
-	x.conn.Close()
-}
-
 type IncidentSelection struct {
-	incidentConnector
+	sqlConnector
 }
 
 func (x *IncidentSelection) Query(args ...any) (data.Scanner, error) {
@@ -74,7 +49,7 @@ func (x *IncidentSelection) Query(args ...any) (data.Scanner, error) {
 }
 
 type IncidentUpdater struct {
-	incidentConnector
+	sqlConnector
 }
 
 func (x *IncidentUpdater) Update(v any) error {
@@ -98,7 +73,7 @@ func (x *IncidentUpdater) Update(v any) error {
 }
 
 type IncidentInserter struct {
-	incidentConnector
+	sqlConnector
 }
 
 func (x *IncidentInserter) Insert(v any) (data.DataID, error) {
@@ -142,7 +117,7 @@ func (x incidentSelectionScanner) Scan(dest ...any) error {
 }
 
 type IncidentReportCollector struct {
-	incidentConnector
+	sqlConnector
 }
 
 func (x *IncidentReportCollector) Query(args ...any) (*data.Scanners, error) {

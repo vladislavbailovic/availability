@@ -3,14 +3,12 @@ package sql
 import (
 	"database/sql"
 	"errors"
-	"os"
 	"strings"
 
 	_ "embed"
 
 	"availability/pkg/data"
 	"availability/pkg/data/model"
-	"availability/pkg/env"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -22,31 +20,8 @@ var (
 	probesForWithinQuery string
 )
 
-type probeConnector struct {
-	conn *sql.DB
-}
-
-func (x *probeConnector) Connect() error {
-	if x.conn != nil {
-		return nil
-	}
-	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
-	if err != nil {
-		return err
-	}
-	x.conn = db
-	return nil
-}
-
-func (x *probeConnector) Disconnect() {
-	if x.conn == nil {
-		return
-	}
-	x.conn.Close()
-}
-
 type ProbeInserter struct {
-	probeConnector
+	sqlConnector
 	Probes []*model.Probe
 }
 
@@ -86,7 +61,7 @@ func (x *ProbeInserter) Insert(items ...any) (data.DataID, error) {
 }
 
 type ProbeCollector struct {
-	probeConnector
+	sqlConnector
 }
 
 func (x *ProbeCollector) Query(args ...any) (*data.Scanners, error) {

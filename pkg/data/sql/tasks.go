@@ -3,12 +3,10 @@ package sql
 import (
 	"database/sql"
 	"errors"
-	"os"
 
 	_ "embed"
 
 	"availability/pkg/data"
-	"availability/pkg/env"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -17,26 +15,7 @@ import (
 var activeTasksQuery string
 
 type TaskCollection struct {
-	conn *sql.DB
-}
-
-func (x *TaskCollection) Connect() error {
-	if x.conn != nil {
-		return nil
-	}
-	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
-	if err != nil {
-		return err
-	}
-	x.conn = db
-	return nil
-}
-
-func (x *TaskCollection) Disconnect() {
-	if x.conn == nil {
-		return
-	}
-	x.conn.Close()
+	sqlConnector
 }
 
 func (x *TaskCollection) Query(args ...any) (*data.Scanners, error) {
