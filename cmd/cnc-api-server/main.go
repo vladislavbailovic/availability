@@ -22,6 +22,11 @@ func registerHandlers() {
 }
 
 func activate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		log.Printf("unsupported request type: %v", r.Method)
+		sendServerError(w)
+		return
+	}
 	rawID := strings.Replace(r.URL.String(), "/activate/", "", 1)
 	siteID, err := strconv.Atoi(rawID)
 	if err != nil {
@@ -47,6 +52,11 @@ func activate(w http.ResponseWriter, r *http.Request) {
 }
 
 func deactivate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		log.Printf("unsupported request type: %v", r.Method)
+		sendServerError(w)
+		return
+	}
 	rawID := strings.Replace(r.URL.String(), "/deactivate/", "", 1)
 	siteID, err := strconv.Atoi(rawID)
 	if err != nil {
