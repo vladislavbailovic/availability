@@ -67,6 +67,11 @@ func (x *SourceInserter) Insert(v any) (data.DataID, error) {
 		return 0, errors.New("expected new source")
 	}
 
+	if err := x.Connect(); err != nil {
+		return 0, err
+	}
+	defer x.Disconnect()
+
 	stmt, err := x.conn.Prepare(insertSourceQuery)
 	if err != nil {
 		return 0, err

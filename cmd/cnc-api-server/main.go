@@ -101,24 +101,8 @@ func addNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !src.IsValid() {
-		log.Printf("invalid source: %v", src)
-		sendServerError(w)
-		return
-	}
-
-	// TODO: validate site URL
-	panic("invalid site URL")
-
 	query := new(sql.SourceInserter)
-	if err := query.Connect(); err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
-	}
-	defer query.Disconnect()
-
-	id, err := query.Insert(src)
+	id, err := collections.CreateNewSource(query, src)
 	if err != nil {
 		log.Println(err)
 		sendServerError(w)
