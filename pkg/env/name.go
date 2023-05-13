@@ -9,6 +9,9 @@ const (
 
 	DBConnURI
 
+	ApiPortCNC
+	ApiSecretCNC
+
 	TotalNamesCount
 )
 
@@ -23,6 +26,11 @@ func (x Name) String() string {
 
 	case DBConnURI:
 		return "AVBL_DBCONN_URI"
+
+	case ApiPortCNC:
+		return "AVBL_API_PORT_CNC"
+	case ApiSecretCNC:
+		return "AVBL_API_SECRET_CNC"
 
 	default:
 		panic("unknown env var")

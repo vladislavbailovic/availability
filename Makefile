@@ -26,6 +26,18 @@ run-docker-controller: job-image docker-controller-image
 		--name avbl-controller \
 		availability:docker-controller
 
+cnc-api:
+	docker build . -f docker/availiability-service \
+		-t availability:api-cnc --target api-cnc
+	docker run --rm \
+		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
+		--env AVBL_API_SECRET_CNC="test" \
+		--env AVBL_API_PORT_CNC="3666" \
+		-p 3666:3666 \
+		--name avbl-api-cnc \
+		availability:api-cnc
+
 reports:
 	docker build . -f docker/availiability-service \
 		-t availability:reports --target reports

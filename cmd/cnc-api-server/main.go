@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,22 +10,26 @@ import (
 	"availability/pkg/data/collections"
 	"availability/pkg/data/model"
 	"availability/pkg/data/sql"
+	"availability/pkg/env"
 	"availability/pkg/server"
 
 	"github.com/gogo/protobuf/jsonpb"
 )
 
 func main() {
-	registerHandlers()
+	apiPort := env.Expect(env.ApiPortCNC)
+	auth := env.Expect(env.ApiSecretCNC)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// TODO: refactor auth header
+	hdr := http.Header{
+		"x-avbl-auth": []string{auth},
+	}
+	registerHandlers(hdr)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", apiPort), nil))
 }
 
-func registerHandlers() {
-	// TODO: unstub auth header
-	hdr := http.Header{
-		"x-avbl-auth": []string{"test"},
-	}
+func registerHandlers(hdr http.Header) {
 	http.HandleFunc("/activate/", server.Handle(server.WithExpectedHeaders(
 		hdr, server.WithExpectedMethod(http.MethodPut, activate))))
 	http.HandleFunc("/deactivate/", server.Handle(server.WithExpectedHeaders(
