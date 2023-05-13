@@ -23,10 +23,15 @@ func main() {
 }
 
 func registerHandlers() {
-	// TODO: auth
-	http.HandleFunc("/activate/", handle(WithExpectedMethod(http.MethodPut, activate)))
-	http.HandleFunc("/deactivate/", handle(WithExpectedMethod(http.MethodPut, deactivate)))
-	http.HandleFunc("/add/", handle(WithExpectedMethod(http.MethodPost, addNew)))
+	hdr := http.Header{
+		"x-avbl-auth": []string{"test"},
+	}
+	http.HandleFunc("/activate/", handle(
+		WithExpectedHeaders(hdr, WithExpectedMethod(http.MethodPut, activate))))
+	http.HandleFunc("/deactivate/", handle(
+		WithExpectedHeaders(hdr, WithExpectedMethod(http.MethodPut, deactivate))))
+	http.HandleFunc("/add/", handle(
+		WithExpectedHeaders(hdr, WithExpectedMethod(http.MethodPost, addNew))))
 }
 
 type handler func(http.ResponseWriter, *http.Request) error
@@ -48,9 +53,33 @@ func handle(f handler) http.HandlerFunc {
 
 func WithExpectedMethod(method string, f handler) handler {
 	return func(w http.ResponseWriter, r *http.Request) error {
+		if r == nil {
+			return errors.New("invalid request")
+		}
 		if r.Method != method {
 			return fmt.Errorf("unsupported request type: %q, expected %q",
 				r.Method, method)
+		}
+		return f(w, r)
+	}
+}
+
+func WithExpectedHeaders(hdr http.Header, f handler) handler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		if r == nil {
+			return errors.New("invalid request")
+		}
+		for key, wants := range hdr {
+			gots := r.Header.Values(key)
+			if len(gots) == 0 {
+				return fmt.Errorf("missing required header %q", key)
+			}
+			for idx, want := range wants {
+				got := gots[idx]
+				if want != got {
+					return fmt.Errorf("invalid header %q(%d): %q", key, idx, got)
+				}
+			}
 		}
 		return f(w, r)
 	}
