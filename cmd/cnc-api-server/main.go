@@ -37,13 +37,6 @@ func registerHandlers(hdr http.Header) {
 	http.HandleFunc("/add/", server.Handle(server.WithExpectedHeaders(
 		hdr, server.WithExpectedMethod(http.MethodPost, addNew))))
 }
-func extractIDFromPath(r *http.Request) (data.DataID, error) {
-	siteID := data.DataID(server.ExtractNumberFromPathAt(r, 1))
-	if !siteID.IsValid() {
-		return 0, errors.New("invalid site ID")
-	}
-	return siteID, nil
-}
 
 func activate(w *server.Response, r *http.Request) error {
 	siteID, err := extractIDFromPath(r)
@@ -88,4 +81,12 @@ func addNew(w *server.Response, r *http.Request) error {
 
 	log.Printf("insert new source: %v, ID: %d", src, id)
 	return nil
+}
+
+func extractIDFromPath(r *http.Request) (data.DataID, error) {
+	siteID := data.DataID(server.ExtractNumberFromPathAt(r, 1))
+	if !siteID.IsValid() {
+		return 0, errors.New("invalid site ID")
+	}
+	return siteID, nil
 }
