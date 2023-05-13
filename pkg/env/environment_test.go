@@ -11,7 +11,7 @@ func Test_Expect_InvalidName(t *testing.T) {
 			t.Error("expected panic")
 		}
 	}()
-	Expect(Name(1312))
+	Variable(1312).Expect()
 }
 
 func Test_Expect_MissingValue(t *testing.T) {
@@ -20,7 +20,7 @@ func Test_Expect_MissingValue(t *testing.T) {
 			t.Error("expected panic")
 		}
 	}()
-	Expect(SiteID)
+	SiteID.Expect()
 }
 
 func Test_Expect_HappyPath(t *testing.T) {
@@ -32,7 +32,7 @@ func Test_Expect_HappyPath(t *testing.T) {
 	want := "wat"
 	os.Setenv(SiteID.String(), want)
 
-	got := Expect(SiteID)
+	got := SiteID.Expect()
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
 	}

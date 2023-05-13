@@ -3,7 +3,7 @@ package env
 import "testing"
 
 func Test_NameString(t *testing.T) {
-	suite := map[string]Name{
+	suite := map[string]Variable{
 		"AVBL_SITE_ID":         SiteID,
 		"AVBL_SITE_URL":        SiteURL,
 		"AVBL_PREVIOUSLY_DOWN": PreviouslyDown,
