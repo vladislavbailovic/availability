@@ -35,25 +35,42 @@ func registerHandlers() {
 		WithExpectedHeaders(hdr, WithExpectedMethod(http.MethodPost, addNew))))
 }
 
-type handler func(http.ResponseWriter, *http.Request) error
+type Response struct {
+	http.ResponseWriter
+	Done bool
+}
+
+func (x *Response) Write(v []byte) (int, error) {
+	x.Done = true
+	return x.ResponseWriter.Write(v)
+}
+
+func (x *Response) WriteHeader(c int) {
+	if !x.Done {
+		x.ResponseWriter.WriteHeader(c)
+	}
+}
+
+type handler func(*Response, *http.Request) error
 
 func handle(f handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := f(w, r); err != nil {
+		resp := &Response{ResponseWriter: w}
+		if err := f(resp, r); err != nil {
 			log.Printf("ERROR [%s %s %s]: %v",
 				r.RemoteAddr, r.Method, r.URL.Path, err)
-			w.WriteHeader(http.StatusInternalServerError)
+			resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		log.Printf("DEBUG: [%s %s %s] OK",
 			r.RemoteAddr, r.Method, r.URL.Path)
-		w.WriteHeader(http.StatusOK)
+		resp.WriteHeader(http.StatusOK)
 	}
 }
 
 func WithExpectedMethod(method string, f handler) handler {
-	return func(w http.ResponseWriter, r *http.Request) error {
+	return func(w *Response, r *http.Request) error {
 		if r == nil {
 			return errors.New("invalid request")
 		}
@@ -66,7 +83,7 @@ func WithExpectedMethod(method string, f handler) handler {
 }
 
 func WithExpectedHeaders(hdr http.Header, f handler) handler {
-	return func(w http.ResponseWriter, r *http.Request) error {
+	return func(w *Response, r *http.Request) error {
 		if r == nil {
 			return errors.New("invalid request")
 		}
@@ -106,7 +123,7 @@ func extractIDFromPath(r *http.Request) (data.DataID, error) {
 	return siteID, nil
 }
 
-func activate(w http.ResponseWriter, r *http.Request) error {
+func activate(w *Response, r *http.Request) error {
 	siteID, err := extractIDFromPath(r)
 	if err != nil {
 		return err
@@ -120,7 +137,7 @@ func activate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func deactivate(w http.ResponseWriter, r *http.Request) error {
+func deactivate(w *Response, r *http.Request) error {
 	siteID, err := extractIDFromPath(r)
 	if err != nil {
 		return err
@@ -134,7 +151,7 @@ func deactivate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func addNew(w http.ResponseWriter, r *http.Request) error {
+func addNew(w *Response, r *http.Request) error {
 	defer r.Body.Close()
 	src := new(model.NewSource)
 	if err := jsonpb.Unmarshal(r.Body, src); err != nil {

@@ -25,8 +25,8 @@ func Test_ExtractNumberFromPathAt(t *testing.T) {
 }
 
 func Test_ExpectMethod(t *testing.T) {
-	v := func(http.ResponseWriter, *http.Request) error { return nil }
-	resp := httptest.NewRecorder()
+	v := func(*Response, *http.Request) error { return nil }
+	resp := &Response{ResponseWriter: httptest.NewRecorder()}
 	h := WithExpectedMethod(http.MethodPost, v)
 	if err := h(resp, nil); err == nil {
 		t.Error("expected error")
@@ -49,11 +49,11 @@ func Test_ExpectMethod(t *testing.T) {
 }
 
 func Test_ExpectAuth(t *testing.T) {
-	v := func(http.ResponseWriter, *http.Request) error { return nil }
+	v := func(*Response, *http.Request) error { return nil }
 	hdr := http.Header{
 		"x-avbl-auth": []string{"test"},
 	}
-	resp := httptest.NewRecorder()
+	resp := &Response{ResponseWriter: httptest.NewRecorder()}
 	h := WithExpectedHeaders(hdr, v)
 	if err := h(resp, nil); err == nil {
 		t.Error("expected error")
