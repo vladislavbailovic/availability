@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	apiPort := env.ApiPortCNC.Expect()
-	auth := env.ApiSecretCNC.Expect()
+	apiPort := env.ApiPortCNC.WithFallback("3666")
+	auth := env.ApiSecretCNC.WithFallback("secret")
 
 	// TODO: refactor auth header
 	hdr := http.Header{

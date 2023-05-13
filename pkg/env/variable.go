@@ -35,3 +35,10 @@ func (x Variable) Expect() string {
 	}
 	return val
 }
+
+func (x Variable) WithFallback(fb string) string {
+	if val := os.Getenv(x.String()); val != "" {
+		return val
+	}
+	return fb
+}
