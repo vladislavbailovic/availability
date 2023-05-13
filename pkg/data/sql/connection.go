@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"os"
 
 	"availability/pkg/env"
 )
@@ -15,7 +14,7 @@ func (x *sqlConnector) Connect() error {
 	if x.conn != nil {
 		return nil
 	}
-	db, err := sql.Open("mysql", os.Getenv(env.DBConnURI.String()))
+	db, err := sql.Open("mysql", env.DBConnURI.Expect())
 	if err != nil {
 		return err
 	}

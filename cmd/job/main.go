@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 
@@ -24,9 +23,9 @@ const (
 var activeIncident *model.Incident
 
 func main() {
-	rawSiteID := os.Getenv(env.SiteID.String())
-	rawSiteURL := os.Getenv(env.SiteURL.String())
-	rawIsDown := os.Getenv(env.PreviouslyDown.String())
+	rawSiteID := env.SiteID.Expect()
+	rawSiteURL := env.SiteURL.Expect()
+	rawIsDown := env.PreviouslyDown.Expect()
 
 	var siteID int
 	if x, err := strconv.Atoi(rawSiteID); err != nil {
