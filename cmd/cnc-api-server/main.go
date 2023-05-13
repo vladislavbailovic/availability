@@ -23,6 +23,7 @@ func main() {
 }
 
 func registerHandlers() {
+	// TODO: unstub auth header
 	hdr := http.Header{
 		"x-avbl-auth": []string{"test"},
 	}
@@ -85,13 +86,20 @@ func WithExpectedHeaders(hdr http.Header, f handler) handler {
 	}
 }
 
-func extractIDFromPath(r *http.Request, initial string) (data.DataID, error) {
-	rawID := strings.Replace(r.URL.String(), initial, "", 1)
-	id, err := strconv.Atoi(rawID)
-	if err != nil {
-		return 0, err
+func ExtractNumberFromPathAt(r *http.Request, at int) int {
+	splits := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(splits) <= at {
+		return 0
 	}
-	siteID := data.DataID(id)
+	id, err := strconv.Atoi(splits[at])
+	if err != nil {
+		return 0
+	}
+	return id
+}
+
+func extractIDFromPath(r *http.Request) (data.DataID, error) {
+	siteID := data.DataID(ExtractNumberFromPathAt(r, 1))
 	if !siteID.IsValid() {
 		return 0, errors.New("invalid site ID")
 	}
@@ -99,7 +107,7 @@ func extractIDFromPath(r *http.Request, initial string) (data.DataID, error) {
 }
 
 func activate(w http.ResponseWriter, r *http.Request) error {
-	siteID, err := extractIDFromPath(r, "/activate/")
+	siteID, err := extractIDFromPath(r)
 	if err != nil {
 		return err
 	}
@@ -113,7 +121,7 @@ func activate(w http.ResponseWriter, r *http.Request) error {
 }
 
 func deactivate(w http.ResponseWriter, r *http.Request) error {
-	siteID, err := extractIDFromPath(r, "/deactivate/")
+	siteID, err := extractIDFromPath(r)
 	if err != nil {
 		return err
 	}
