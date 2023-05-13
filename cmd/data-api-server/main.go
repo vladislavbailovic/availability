@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -8,6 +9,8 @@ import (
 	"time"
 
 	"availability/pkg/data"
+	"availability/pkg/data/collections"
+	"availability/pkg/data/fakes"
 	"availability/pkg/env"
 	"availability/pkg/server"
 )
@@ -65,9 +68,20 @@ func daily(w *server.Response, r *http.Request) error {
 		return err
 	}
 
-	log.Println("daily", siteID)
+	query := new(fakes.IncidentReportCollector)
+	reports, err := collections.GetIncidentReportsFor(
+		query, siteID.ToNumericID(), 24*time.Hour)
+	if err != nil {
+		return err
+	}
 
-	return errors.New("TODO: implement sourcePeriod")
+	w.Header().Add("content-type", "application/json")
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(reports); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func weekly(w *server.Response, r *http.Request) error {
@@ -76,9 +90,20 @@ func weekly(w *server.Response, r *http.Request) error {
 		return err
 	}
 
-	log.Println("weekly", siteID)
+	query := new(fakes.IncidentReportCollector)
+	reports, err := collections.GetIncidentReportsFor(
+		query, siteID.ToNumericID(), 7*24*time.Hour)
+	if err != nil {
+		return err
+	}
 
-	return errors.New("TODO: implement sourcePeriod")
+	w.Header().Add("content-type", "application/json")
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(reports); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func monthly(w *server.Response, r *http.Request) error {
@@ -87,9 +112,20 @@ func monthly(w *server.Response, r *http.Request) error {
 		return err
 	}
 
-	log.Println("monthly", siteID)
+	query := new(fakes.IncidentReportCollector)
+	reports, err := collections.GetIncidentReportsFor(
+		query, siteID.ToNumericID(), 30*24*time.Hour)
+	if err != nil {
+		return err
+	}
 
-	return errors.New("TODO: implement sourcePeriod")
+	w.Header().Add("content-type", "application/json")
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(reports); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func extractIDFromPath(r *http.Request) (data.DataID, error) {
