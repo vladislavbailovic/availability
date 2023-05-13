@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"availability/pkg/data"
 	"availability/pkg/data/collections"
 	"availability/pkg/data/model"
 	"availability/pkg/data/sql"
@@ -21,102 +24,92 @@ func main() {
 
 func registerHandlers() {
 	// TODO: auth
-	http.HandleFunc("/activate/", activate)
-	http.HandleFunc("/deactivate/", deactivate)
-	http.HandleFunc("/add/", addNew)
+	http.HandleFunc("/activate/", handle(WithExpectedMethod(http.MethodPut, activate)))
+	http.HandleFunc("/deactivate/", handle(WithExpectedMethod(http.MethodPut, deactivate)))
+	http.HandleFunc("/add/", handle(WithExpectedMethod(http.MethodPost, addNew)))
 }
 
-func activate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		log.Printf("unsupported request type: %v", r.Method)
-		sendServerError(w)
-		return
+type handler func(http.ResponseWriter, *http.Request) error
+
+func handle(f handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := f(w, r); err != nil {
+			log.Printf("ERROR [%s %s %s]: %v",
+				r.RemoteAddr, r.Method, r.URL.Path, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("DEBUG: [%s %s %s] OK",
+			r.RemoteAddr, r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusOK)
 	}
-	rawID := strings.Replace(r.URL.String(), "/activate/", "", 1)
-	siteID, err := strconv.Atoi(rawID)
+}
+
+func WithExpectedMethod(method string, f handler) handler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		if r.Method != method {
+			return fmt.Errorf("unsupported request type: %q, expected %q",
+				r.Method, method)
+		}
+		return f(w, r)
+	}
+}
+
+func extractIDFromPath(r *http.Request, initial string) (data.DataID, error) {
+	rawID := strings.Replace(r.URL.String(), initial, "", 1)
+	id, err := strconv.Atoi(rawID)
 	if err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
+		return 0, err
+	}
+	siteID := data.DataID(id)
+	if !siteID.IsValid() {
+		return 0, errors.New("invalid site ID")
+	}
+	return siteID, nil
+}
+
+func activate(w http.ResponseWriter, r *http.Request) error {
+	siteID, err := extractIDFromPath(r, "/activate/")
+	if err != nil {
+		return err
 	}
 
 	query := new(sql.SourceActivator)
-	if err := query.Connect(); err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
-	}
-	defer query.Disconnect()
 	if err := collections.UpdateSource(query, siteID); err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
+		return err
 	}
 
-	sendAllGood(w)
+	return nil
 }
 
-func deactivate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		log.Printf("unsupported request type: %v", r.Method)
-		sendServerError(w)
-		return
-	}
-	rawID := strings.Replace(r.URL.String(), "/deactivate/", "", 1)
-	siteID, err := strconv.Atoi(rawID)
+func deactivate(w http.ResponseWriter, r *http.Request) error {
+	siteID, err := extractIDFromPath(r, "/deactivate/")
 	if err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
+		return err
 	}
 
 	query := new(sql.SourceDeactivator)
-	if err := query.Connect(); err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
-	}
-	defer query.Disconnect()
 	if err := collections.UpdateSource(query, siteID); err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
+		return err
 	}
 
-	sendAllGood(w)
+	return nil
 }
 
-func addNew(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		log.Printf("unsupported request type: %v", r.Method)
-		sendServerError(w)
-		return
-	}
-
+func addNew(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 	src := new(model.NewSource)
 	if err := jsonpb.Unmarshal(r.Body, src); err != nil {
-		log.Print(err)
-		sendServerError(w)
-		return
+		return err
 	}
 
 	query := new(sql.SourceInserter)
 	id, err := collections.CreateNewSource(query, src)
 	if err != nil {
-		log.Println(err)
-		sendServerError(w)
-		return
+		return err
 	}
 
 	log.Printf("insert new source: %v, ID: %d", src, id)
-	sendAllGood(w)
-}
-
-func sendAllGood(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusOK)
-}
-
-func sendServerError(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusInternalServerError)
+	return nil
 }

@@ -8,11 +8,11 @@ import (
 	"availability/pkg/data/model"
 )
 
-func UpdateSource(query data.Updater, siteID int) error {
-	if siteID <= 0 {
+func UpdateSource(query data.Updater, siteID data.DataID) error {
+	if !siteID.IsValid() {
 		return errors.New("invalid site ID")
 	}
-	return query.Update(siteID)
+	return query.Update(siteID.ToNumericID())
 }
 
 func CreateNewSource(query data.Inserter, src *model.NewSource) (data.DataID, error) {

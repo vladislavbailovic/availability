@@ -27,6 +27,11 @@ func (x *SourceActivator) Update(v any) error {
 		return errors.New("invalid site ID")
 	}
 
+	if err := x.Connect(); err != nil {
+		return err
+	}
+	defer x.Disconnect()
+
 	stmt, err := x.conn.Prepare(updateSourceQuery)
 	if err != nil {
 		return err
@@ -46,6 +51,11 @@ func (x *SourceDeactivator) Update(v any) error {
 	if !ok || siteID <= 0 {
 		return errors.New("invalid site ID")
 	}
+
+	if err := x.Connect(); err != nil {
+		return err
+	}
+	defer x.Disconnect()
 
 	stmt, err := x.conn.Prepare(updateSourceQuery)
 	if err != nil {

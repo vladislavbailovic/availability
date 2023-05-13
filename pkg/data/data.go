@@ -17,6 +17,10 @@ func (x DataID) ToNumericID() int {
 	return int(x)
 }
 
+func (x DataID) IsValid() bool {
+	return x.ToNumericID() > 0
+}
+
 type Scanner interface {
 	Scan(...any) error
 }
