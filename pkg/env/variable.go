@@ -17,6 +17,9 @@ const (
 	ApiPortCNC
 	ApiSecretCNC
 
+	ApiPortData
+	ApiSecretData
+
 	TotalNamesCount
 )
 
@@ -28,8 +31,12 @@ func (x Variable) String() string {
 	return name
 }
 
+func (x Variable) Value() string {
+	return os.Getenv(x.String())
+}
+
 func (x Variable) Expect() string {
-	val := os.Getenv(x.String())
+	val := x.Value()
 	if val == "" {
 		panic(fmt.Sprintf("missing required env var: %q", x.String()))
 	}
@@ -37,7 +44,7 @@ func (x Variable) Expect() string {
 }
 
 func (x Variable) WithFallback(fb string) string {
-	if val := os.Getenv(x.String()); val != "" {
+	if val := x.Value(); val != "" {
 		return val
 	}
 	return fb

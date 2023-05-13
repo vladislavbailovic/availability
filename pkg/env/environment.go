@@ -7,4 +7,6 @@ var knownEnvVars map[Variable]string = map[Variable]string{
 	DBConnURI:      "AVBL_DBCONN_URI",
 	ApiPortCNC:     "AVBL_API_PORT_CNC",
 	ApiSecretCNC:   "AVBL_API_SECRET_CNC",
+	ApiPortData:    "AVBL_API_PORT_DATA",
+	ApiSecretData:  "AVBL_API_SECRET_DATA",
 }
