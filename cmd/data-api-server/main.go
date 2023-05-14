@@ -67,7 +67,7 @@ func since(w *server.Response, r *http.Request) error {
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{}
+	enc := jsonpb.Marshaler{EnumsAsInts: true}
 	if err := enc.Marshal(w, report); err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func daily(w *server.Response, r *http.Request) error {
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true}
+	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
 	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func weekly(w *server.Response, r *http.Request) error {
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true}
+	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
 	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func monthly(w *server.Response, r *http.Request) error {
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true}
+	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
 	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
