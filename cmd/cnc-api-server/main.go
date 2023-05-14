@@ -20,12 +20,7 @@ func main() {
 	apiPort := env.ApiPortCNC.WithFallback("3666")
 	auth := env.ApiSecretCNC.WithFallback("secret")
 
-	// TODO: refactor auth header
-	hdr := http.Header{
-		"x-avbl-auth": []string{auth},
-	}
-	registerHandlers(hdr)
-
+	registerHandlers(server.GetAuthHeader(auth))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", apiPort), nil))
 }
 

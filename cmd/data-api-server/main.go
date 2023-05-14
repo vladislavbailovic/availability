@@ -24,12 +24,7 @@ func main() {
 	apiPort := env.ApiPortData.WithFallback("3667")
 	auth := env.ApiSecretData.Value()
 
-	hdr := http.Header{}
-	if auth != "" {
-		hdr.Add("x-avbl-auth", auth)
-	}
-	registerHandlers(hdr)
-
+	registerHandlers(server.GetAuthHeader(auth))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", apiPort), nil))
 }
 
