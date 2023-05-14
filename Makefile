@@ -8,8 +8,8 @@ job-image:
 	docker build . -f docker/availiability-service \
 		-t availability:job --target job
 docker-controller-image:
-		docker build . -f docker/availiability-service \
-			-t availability:docker-controller --target docker-controller
+	docker build . -f docker/availiability-service \
+		-t availability:docker-controller --target docker-controller
 
 data:
 	-docker container stop avbl-data
