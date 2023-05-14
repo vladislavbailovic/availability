@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -11,8 +10,12 @@ import (
 	"availability/pkg/data"
 	"availability/pkg/data/collections"
 	"availability/pkg/data/fakes"
+	"availability/pkg/data/model"
 	"availability/pkg/env"
 	"availability/pkg/server"
+
+	"github.com/gogo/protobuf/jsonpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var sinceRangeMax time.Duration = 7 * 24 * time.Hour
@@ -56,28 +59,36 @@ func since(w *server.Response, r *http.Request) error {
 		return errors.New("too early")
 	}
 
-	log.Println(start)
-	log.Println(start.Unix())
+	report := new(model.PeriodicIncidentReport)
+	report.Start = timestamppb.New(start)
 
-	return errors.New("TODO: implement since")
-}
-
-func daily(w *server.Response, r *http.Request) error {
-	siteID, err := extractIDFromPath(r)
-	if err != nil {
-		return err
-	}
-
-	query := new(fakes.IncidentReportCollector)
-	reports, err := collections.GetIncidentReportsFor(
-		query, siteID.ToNumericID(), 24*time.Hour)
+	var err error
+	limit := 100
+	query := new(fakes.IncidentReportPeriodCollector)
+	report.Incidents, err = collections.GetIncidentReportsWithin(
+		query, start, limit)
 	if err != nil {
 		return err
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(reports); err != nil {
+	enc := jsonpb.Marshaler{}
+	if err := enc.Marshal(w, report); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func daily(w *server.Response, r *http.Request) error {
+	reports, err := sourcePeriodFromRequest(r, 24*time.Hour)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Add("content-type", "application/json")
+	enc := jsonpb.Marshaler{EmitDefaults: true}
+	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
 
@@ -85,21 +96,14 @@ func daily(w *server.Response, r *http.Request) error {
 }
 
 func weekly(w *server.Response, r *http.Request) error {
-	siteID, err := extractIDFromPath(r)
-	if err != nil {
-		return err
-	}
-
-	query := new(fakes.IncidentReportCollector)
-	reports, err := collections.GetIncidentReportsFor(
-		query, siteID.ToNumericID(), 7*24*time.Hour)
+	reports, err := sourcePeriodFromRequest(r, 7*24*time.Hour)
 	if err != nil {
 		return err
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(reports); err != nil {
+	enc := jsonpb.Marshaler{EmitDefaults: true}
+	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
 
@@ -107,31 +111,38 @@ func weekly(w *server.Response, r *http.Request) error {
 }
 
 func monthly(w *server.Response, r *http.Request) error {
-	siteID, err := extractIDFromPath(r)
-	if err != nil {
-		return err
-	}
-
-	query := new(fakes.IncidentReportCollector)
-	reports, err := collections.GetIncidentReportsFor(
-		query, siteID.ToNumericID(), 30*24*time.Hour)
+	reports, err := sourcePeriodFromRequest(r, 30*24*time.Hour)
 	if err != nil {
 		return err
 	}
 
 	w.Header().Add("content-type", "application/json")
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(reports); err != nil {
+	enc := jsonpb.Marshaler{EmitDefaults: true}
+	if err := enc.Marshal(w, reports); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func extractIDFromPath(r *http.Request) (data.DataID, error) {
+func sourcePeriodFromRequest(r *http.Request, period time.Duration) (*model.PeriodicIncidentReport, error) {
+	now := time.Now()
+	report := new(model.PeriodicIncidentReport)
+	report.Start = timestamppb.New(now.Add(-period))
+	report.End = timestamppb.New(now)
+
 	siteID := data.DataID(server.ExtractNumberFromPathAt(r, 1))
 	if !siteID.IsValid() {
-		return 0, errors.New("invalid site ID")
+		return report, errors.New("invalid site ID")
 	}
-	return siteID, nil
+
+	var err error
+	query := new(fakes.IncidentReportCollector)
+	report.Incidents, err = collections.GetIncidentReportsFor(
+		query, siteID.ToNumericID(), period)
+	if err != nil {
+		return report, err
+	}
+
+	return report, nil
 }

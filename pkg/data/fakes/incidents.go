@@ -62,6 +62,30 @@ func (x *IncidentReportCollector) Query(args ...any) (*data.Scanners, error) {
 	return &scanners, nil
 }
 
+type IncidentReportPeriodCollector struct {
+	Reports []Report
+}
+
+func (x *IncidentReportPeriodCollector) Query(args ...any) (*data.Scanners, error) {
+	since := data.TimestampArgAt(args, 0)
+	if since.Unix() <= 0 {
+		return nil, errors.New("expected period timestamp")
+	}
+
+	limit := data.IntArgAt(args, 1)
+	if limit == 0 {
+		return nil, errors.New("expected limit")
+	}
+
+	res := make([]data.Scanner, 0, len(x.Reports))
+	for _, r := range x.Reports {
+		s := reportScanner{r: r}
+		res = append(res, data.Scanner(&s))
+	}
+	scanners := data.Scanners(res)
+	return &scanners, nil
+}
+
 type reportScanner struct {
 	r Report
 }

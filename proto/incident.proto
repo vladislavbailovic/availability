@@ -14,11 +14,17 @@ message Incident {
 }
 
 message IncidentReport {
-	int32                     IncidentID     = 1;
-	int32                     SiteID         = 2;
-	string                    URL            = 3;
-	google.protobuf.Timestamp Started        = 5;
-	HttpErr                   Err            = 6;
-	string                    Msg            = 7;
-	google.protobuf.Timestamp Ended          = 9;
+	int32                     IncidentID     = 1 [json_name="incident_id"];
+	int32                     SiteID         = 2 [json_name="site_id"];
+	string                    URL            = 3 [json_name="url"];
+	google.protobuf.Timestamp Started        = 5 [json_name="started"];
+	HttpErr                   Err            = 6 [json_name="err"];
+	string                    Msg            = 7 [json_name="msg"];
+	google.protobuf.Timestamp Ended          = 9 [json_name="ended"];
+}
+
+message PeriodicIncidentReport {
+	google.protobuf.Timestamp Start          = 1 [json_name="start"];
+	optional google.protobuf.Timestamp End   = 2 [json_name="end"];
+	repeated IncidentReport   Incidents      = 3 [json_name="incidents"];
 }

@@ -90,3 +90,38 @@ func GetIncidentReportsFor(query data.Collector, siteID int, since time.Duration
 		return rs, nil
 	}
 }
+
+func GetIncidentReportsWithin(query data.Collector, since time.Time, limit int) ([]*model.IncidentReport, error) {
+	rs := make([]*model.IncidentReport, 0)
+
+	if limit <= 0 {
+		return rs, errors.New("limit required")
+	}
+
+	if res, err := query.Query(since, limit); err != nil {
+		return rs, err
+	} else {
+		for _, result := range *res {
+			var started, ended string
+			r := new(model.IncidentReport)
+			err := result.Scan(
+				&r.SiteID,
+				&r.URL,
+				&started,
+				&r.Err,
+				&r.Msg,
+				&ended)
+			if !r.IsValid() {
+				continue
+			}
+			if err != nil {
+				log.Printf("WARNING: scan error: %v", err)
+				continue
+			}
+			r.Started = data.TimestampFromDatetime(started)
+			r.Ended = data.TimestampFromDatetime(ended)
+			rs = append(rs, r)
+		}
+		return rs, nil
+	}
+}
