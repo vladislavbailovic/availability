@@ -37,6 +37,36 @@ cnc-api:
 		-p 3666:3666 \
 		--name avbl-api-cnc \
 		availability:api-cnc
+data-api:
+	docker build . -f docker/availiability-service \
+		-t availability:api-data --target api-data
+	docker run --rm \
+		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
+		--env AVBL_API_PORT_DATA="3667" \
+		-p 3667:3667 \
+		--name avbl-api-data \
+		availability:api-data
+api:
+	docker build . -f docker/availiability-service \
+		-t availability:api-cnc --target api-cnc
+	docker build . -f docker/availiability-service \
+		-t availability:api-data --target api-data
+	docker run --rm -d \
+		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
+		--env AVBL_API_SECRET_CNC="test" \
+		--env AVBL_API_PORT_CNC="3666" \
+		-p 3666:3666 \
+		--name avbl-api-cnc \
+		availability:api-cnc
+	docker run --rm -d \
+		--link avbl-data \
+		--env AVBL_DBCONN_URI="root:root@tcp(avbl-data:3306)/narfs" \
+		--env AVBL_API_PORT_DATA="3667" \
+		-p 3667:3667 \
+		--name avbl-api-data \
+		availability:api-data
 
 reports:
 	docker build . -f docker/availiability-service \

@@ -30,3 +30,7 @@ ENTRYPOINT ["/reports"]
 FROM alpine:latest as api-cnc
 COPY --from=build /app/cnc-api-server /cnc-api-server
 ENTRYPOINT ["/cnc-api-server"]
+
+FROM alpine:latest as api-data
+COPY --from=build /app/data-api-server /data-api-server
+ENTRYPOINT ["/data-api-server"]
