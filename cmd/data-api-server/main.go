@@ -76,48 +76,32 @@ func since(w *server.Response, r *http.Request) error {
 }
 
 func daily(w *server.Response, r *http.Request) error {
-	reports, err := sourcePeriodFromRequest(r, 24*time.Hour)
-	if err != nil {
-		return err
-	}
-
-	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
-	if err := enc.Marshal(w, reports); err != nil {
-		return err
-	}
-
-	return nil
+	return handlePeriod(24*time.Hour)(w, r)
 }
 
 func weekly(w *server.Response, r *http.Request) error {
-	reports, err := sourcePeriodFromRequest(r, 7*24*time.Hour)
-	if err != nil {
-		return err
-	}
-
-	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
-	if err := enc.Marshal(w, reports); err != nil {
-		return err
-	}
-
-	return nil
+	return handlePeriod(7*24*time.Hour)(w, r)
 }
 
 func monthly(w *server.Response, r *http.Request) error {
-	reports, err := sourcePeriodFromRequest(r, 30*24*time.Hour)
-	if err != nil {
-		return err
-	}
+	return handlePeriod(30*24*time.Hour)(w, r)
+}
 
-	w.Header().Add("content-type", "application/json")
-	enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
-	if err := enc.Marshal(w, reports); err != nil {
-		return err
-	}
+func handlePeriod(period time.Duration) server.Handler {
+	return func(w *server.Response, r *http.Request) error {
+		reports, err := sourcePeriodFromRequest(r, period)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		w.Header().Add("content-type", "application/json")
+		enc := jsonpb.Marshaler{EmitDefaults: true, EnumsAsInts: true}
+		if err := enc.Marshal(w, reports); err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func sourcePeriodFromRequest(r *http.Request, period time.Duration) (*model.PeriodicIncidentReport, error) {
