@@ -22,6 +22,8 @@ var (
 	insertIncidentQuery string
 	//go:embed queries/incident_reports_for_within.sql
 	incidentReportsForWithinQuery string
+	//go:embed queries/incident_reports_within.sql
+	incidentReportsWithinQuery string
 )
 
 type IncidentSelection struct {
@@ -143,6 +145,45 @@ func (x *IncidentReportCollector) Query(args ...any) (*data.Scanners, error) {
 	defer stmt.Close()
 
 	results, err := stmt.Query(siteID, since.Seconds(), limit)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]data.Scanner, 0, limit)
+	for i := 0; i < limit; i++ {
+		res = append(res, data.Scanner(incidentReportScanner{r: results}))
+	}
+
+	scanners := data.Scanners(res)
+	return &scanners, nil
+}
+
+type IncidentReportPeriodCollector struct {
+	sqlConnector
+}
+
+func (x *IncidentReportPeriodCollector) Query(args ...any) (*data.Scanners, error) {
+	since := data.TimestampArgAt(args, 0)
+	if since.Unix() <= 0 {
+		return nil, errors.New("expected period timestamp")
+	}
+
+	limit := data.IntArgAt(args, 1)
+	if limit == 0 {
+		return nil, errors.New("expected limit")
+	}
+
+	if err := x.Connect(); err != nil {
+		return nil, err
+	}
+
+	stmt, err := x.conn.Prepare(incidentReportsWithinQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	results, err := stmt.Query(since, limit)
 	if err != nil {
 		return nil, err
 	}

@@ -9,8 +9,8 @@ import (
 
 	"availability/pkg/data"
 	"availability/pkg/data/collections"
-	"availability/pkg/data/fakes"
 	"availability/pkg/data/model"
+	"availability/pkg/data/sql"
 	"availability/pkg/env"
 	"availability/pkg/server"
 
@@ -64,7 +64,7 @@ func since(w *server.Response, r *http.Request) error {
 
 	var err error
 	limit := 100
-	query := new(fakes.IncidentReportPeriodCollector)
+	query := new(sql.IncidentReportPeriodCollector)
 	report.Incidents, err = collections.GetIncidentReportsWithin(
 		query, start, limit)
 	if err != nil {
@@ -137,7 +137,7 @@ func sourcePeriodFromRequest(r *http.Request, period time.Duration) (*model.Peri
 	}
 
 	var err error
-	query := new(fakes.IncidentReportCollector)
+	query := new(sql.IncidentReportCollector)
 	report.Incidents, err = collections.GetIncidentReportsFor(
 		query, siteID.ToNumericID(), period)
 	if err != nil {
